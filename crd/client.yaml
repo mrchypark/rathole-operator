@@ -1,0 +1,127 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clients.mrchypark.github.io
+spec:
+  group: mrchypark.github.io
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                remoteAddr:
+                  type: string
+                  description: "The address of the server. This field is necessary."
+                defaultToken:
+                  type: string
+                  description: "The default token of services, if they don't define their own ones. This field is optional."
+                  default: "default_token_if_not_specify"
+                heartbeatTimeout:
+                  type: integer
+                  description: "Set to 0 to disable the application-layer heartbeat test. This field is optional."
+                  default: 40
+                retryInterval:
+                  type: integer
+                  description: "The interval between retry to connect to the server. This field is optional."
+                  default: 1
+                transport:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      description: "Specify which transport to use. This block is optional."
+                      # TODO: impliment tls, websocket
+                      enum: ["tcp", "noise"]
+                      default: "tcp"
+                    tcp:
+                      type: object
+                      description: "TCP transport settings. This block also affects `noise` and `tls`."
+                      properties:
+                        proxy:
+                          type: string
+                          description: "The proxy used to connect to the server. `http` and `socks5` is supported. This field is optional."
+                        noDelay:
+                          type: boolean
+                          description: "Determine whether to enable TCP_NODELAY. This field is optional."
+                          default: true
+                        keepaliveSecs:
+                          type: integer
+                          description: "Specify `tcp_keepalive_time` in `tcp(7)`. This field is optional."
+                          default: 20
+                        keepaliveInterval:
+                          type: integer
+                          description: "Specify `tcp_keepalive_intvl` in `tcp(7)`. This field is optional."
+                          default: 8
+                    # tls:
+                    #   type: object
+                    #   description: "TLS transport settings. Necessary if `type` is 'tls'."
+                    #   properties:
+                    #     trustedRoot:
+                    #       type: string
+                    #       description: "The certificate of CA that signed the server's certificate. This field is necessary."
+                    #     hostname:
+                    #       type: string
+                    #       description: "The hostname that the client uses to validate the certificate. If not set, fallback to `client.remoteAddr`. This field is optional."
+                    noise:
+                      type: object
+                      description: "Noise protocol settings. See `docs/transport.md` for further explanation."
+                      properties:
+                        pattern:
+                          type: string
+                          description: "Noise protocol pattern. This field is optional."
+                          default: "Noise_NK_25519_ChaChaPoly_BLAKE2s"
+                        localPrivateKey:
+                          type: string
+                          description: "Local private key, encoded in Base64. This field is optional."
+                        remotePublicKey:
+                          type: string
+                          description: "Remote public key, encoded in Base64. This field is optional."
+                    # websocket:
+                    #   type: object
+                    #   description: "Websocket transport settings. Necessary if `type` is 'websocket'."
+                    #   properties:
+                    #     tls:
+                    #       type: boolean
+                    #       description: "If `true`, it will use settings in `client.transport.tls`. This field is optional."
+                    #       default: true
+                services:
+                  type: array
+                  description: "Services that need forwarding."
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        description: "The protocol that needs forwarding. This field is optional."
+                        enum: ["tcp", "udp"]
+                        default: "tcp"
+                      token:
+                        type: string
+                        description: "Token for the service. Necessary if `client.defaultToken` not set."
+                      localAddr:
+                        type: string
+                        description: "The address of the service that needs to be forwarded. This field is necessary."
+                      noDelay:
+                        type: boolean
+                        description: "Override the `client.transport.noDelay` per service. This field is optional."
+                        default: true
+                      retryInterval:
+                        type: integer
+                        description: "The interval between retry to connect to the server. This field is optional."
+                        default: 1
+              required:
+                - remoteAddr
+                - localAddr
+  scope: Namespaced
+  names:
+    plural: clients
+    singular: client
+    kind: Client
+    shortNames:
+    - cl

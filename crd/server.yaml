@@ -1,0 +1,121 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: servers.mrchypark.github.io
+spec:
+  group: mrchypark.github.io
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                exposeAddr:
+                  type: string
+                  description: "The address of the server. This field is necessary."
+                bindAddr:
+                  type: string
+                  description: "The address that the server listens for clients. This field is necessary."
+                defaultToken:
+                  type: string
+                  description: "The default token of services. This field is optional."
+                heartbeatInterval:
+                  type: integer
+                  description: "The interval between two application-layer heartbeats. This field is optional."
+                  default: 30
+                transport:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      description: "Specify which transport to use. This field is optional."
+                      # TODO: impliment tls, websocket
+                      enum: ["tcp", "noise"]
+                      default: "tcp"
+                    tcp:
+                      type: object
+                      description: "TCP transport settings."
+                      properties:
+                        noDelay:
+                          type: boolean
+                          description: "Determine whether to enable TCP_NODELAY. This field is optional."
+                          default: true
+                        keepaliveSecs:
+                          type: integer
+                          description: "Specify `tcp_keepalive_time` in `tcp(7)`. This field is optional."
+                          default: 20
+                        keepaliveInterval:
+                          type: integer
+                          description: "Specify `tcp_keepalive_intvl` in `tcp(7)`. This field is optional."
+                          default: 8
+                    # tls:
+                    #   type: object
+                    #   description: "TLS transport settings. Necessary if `type` is 'tls'."
+                    #   properties:
+                    #     pkcs12:
+                    #       type: string
+                    #       description: "pkcs12 file of server's certificate and private key. This field is necessary."
+                    #     pkcs12Password:
+                    #       type: string
+                    #       description: "Password of the pkcs12 file. This field is necessary."
+                    noise:
+                      type: object
+                      description: "Noise protocol settings. See `https://github.com/rapiz1/rathole/blob/main/docs/transport.md` for further explanation."
+                      properties:
+                        pattern:
+                          type: string
+                          description: "Noise protocol pattern. This field is optional."
+                          default: "Noise_NK_25519_ChaChaPoly_BLAKE2s"
+                        localPrivateKey:
+                          type: string
+                          description: "Local private key, encoded in Base64. This field is optional."
+                        localPrivateKeyRef:
+                          name:
+                          key:
+                        remotePublicKey:
+                          type: string
+                          description: "Remote public key, encoded in Base64. This field is optional."
+                    # websocket:
+                    #   type: object
+                    #   description: "Websocket transport settings. Necessary if `type` is 'websocket'."
+                    #   properties:
+                    #     tls:
+                    #       type: boolean
+                    #       description: "If `true`, it will use settings in `server.transport.tls`. This field is optional."
+                    #       default: true
+                services:
+                  type: array
+                  description: "The services that the server exposes."
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        description: "The protocol of the service. This field is optional."
+                        enum: ["tcp", "udp"]
+                        default: "tcp"
+                      token:
+                        type: string
+                        description: "Token for the service. Necessary if `server.defaultToken` not set."
+                      bindAddr:
+                        type: string
+                        description: "The address of the service is exposed at. This field is necessary."
+                      noDelay:
+                        type: boolean
+                        description: "Override the `server.transport.noDelay` per service. This field is optional."
+                        default: true
+              required:
+                - bindAddr
+  scope: Namespaced
+  names:
+    plural: servers
+    singular: server
+    kind: Server
+    shortNames:
+    - sv
+    - svr
