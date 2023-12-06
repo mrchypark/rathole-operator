@@ -1,5 +1,61 @@
 ---
 spec:
+  template:
+    spec:
+      containers:
+        - env:
+            - name: MIX_ENV
+              value: prod
+            - name: BONNY_OPERATOR_NAME
+              value: bonny
+            - name: BONNY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: BONNY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: BONNY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: BONNY_POD_SERVICE_ACCOUNT
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.serviceAccountName
+          name: bonny
+          image: ghcr.io/mrchypark/rathole-operator:0.0.1
+          resources:
+            requests:
+              cpu: 200m
+              memory: 200Mi
+            limits:
+              cpu: 200m
+              memory: 200Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+      serviceAccountName: rathole
+    metadata:
+      labels:
+        k8s-app: rathole
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: rathole
+metadata:
+  name: bonny
+  labels:
+    k8s-app: rathole
+  namespace: default
+kind: Deployment
+apiVersion: apps/v1
+
+---
+spec:
   scope: Namespaced
   group: rathole.mrchypark.github.io
   names:

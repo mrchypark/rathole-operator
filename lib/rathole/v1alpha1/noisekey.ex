@@ -42,7 +42,7 @@ defmodule Rathole.API.V1Alpha1.NoiseKey do
 
   @impl true
   def manifest() do
-    path = Path.expand(Path.join(File.cwd!(), "../crd/noisekey.yaml"))
+    path = Path.expand(Path.join(File.cwd!(), "/crd/schema/noisekey.yaml"))
     {:ok, value} = YamlElixir.read_from_file(path)
     defaults()
     |> struct!(schema: value)

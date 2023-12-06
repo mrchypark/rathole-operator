@@ -42,7 +42,7 @@ defmodule Rathole.API.V1Alpha1.Client do
 
   @impl true
   def manifest() do
-    path = Path.expand(Path.join(File.cwd!(), "../crd/client.yaml"))
+    path = Path.expand(Path.join(File.cwd!(), "/crd/schema/client.yaml"))
     {:ok, value} = YamlElixir.read_from_file(path)
     defaults()
     |> struct!(schema: value)
