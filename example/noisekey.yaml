@@ -1,0 +1,8 @@
+apiVersion: rathole.mrchypark.github.io/v1alpha1
+kind: NoiseKey
+metadata:
+  name: example-noisekey
+spec:
+  privateKeyField: "private"
+  publicKeyField: "public"
+  secretName: "example-secret"
