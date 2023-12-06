@@ -106,7 +106,11 @@
     }
   ],
   
-  "rathole.mrchypark.github.io/v1alpha1": [{"name":"clients","kind":"clients","namespaced":true,"verbs":["*"]},{"name":"servers","kind":"servers","namespaced":true,"verbs":["*"]}],
+  "rathole.mrchypark.github.io/v1alpha1": [
+    {"name":"clients","kind":"clients","namespaced":true,"verbs":["*"]},
+    {"name":"servers","kind":"servers","namespaced":true,"verbs":["*"]},
+    {"name":"noisekeys","kind":"noisekeys","namespaced":true,"verbs":["*"]}
+  ],
   
   "events.k8s.io/v1": [
     {
