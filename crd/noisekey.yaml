@@ -1,34 +1,14 @@
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: noisekeys.mrchypark.github.io
-spec:
-  group: mrchypark.github.io
-  scope: Namespaced
-  names:
-    plural: noisekeys
-    singular: noisekey
-    kind: NoiseKey
-    shortNames:
-    - nk
-  versions:
-    - name: v1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            spec:
-              type: object
-              properties:
-                secretName:
-                  type: string
-                publicKeyField:
-                  type: string
-                  default: "public"
-                privateKeyField:
-                  type: string
-                  default: "private"
-  conversion:
-    strategy: None
+openAPIV3Schema:
+  type: object
+  properties:
+    spec:
+      type: object
+      properties:
+        secretName:
+          type: string
+        publicKeyField:
+          type: string
+          default: "public"
+        privateKeyField:
+          type: string
+          default: "private"
