@@ -26,8 +26,8 @@ jobs:
             latest=false
           images: ghcr.io/mrchypark/rathole-operator
           tags: |
-            type=semver,pattern={{version}}
-            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=sha,prefix={{branch}}-,enable=${{ !startsWith(github.ref, 'refs/tags/v') }}
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v3
