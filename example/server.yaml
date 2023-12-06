@@ -5,8 +5,6 @@ metadata:
 spec:
   bindAddr: "0.0.0.0:1234"
   exposeAddr: "server.example.com:1234"
-  defaultToken: "example-default-token"
-  heartbeatInterval: 25
   services:
     - bindAddr: "localhost:8080"
       noDelay: true
@@ -16,7 +14,3 @@ spec:
     noise:
       localPrivateKey: "Base64EncodedPrivateKey"
       pattern: "Noise_NK_25519_ChaChaPoly_BLAKE2s"
-    tcp:
-      keepaliveInterval: 10
-      keepaliveSecs: 25
-      noDelay: true

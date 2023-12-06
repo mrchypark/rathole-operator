@@ -1,0 +1,4 @@
+{
+    "elixirLS.enableTestLenses": true,
+    "elixirLS.fetchDeps": true
+}

@@ -4,22 +4,12 @@ metadata:
   name: example-client
 spec:
   remoteAddr: "server.example.com:1234"
-  defaultToken: "example-default-token"
-  heartbeatTimeout: 30
-  retryInterval: 5
-  services:
-    - localAddr: "localhost:8080"
-      noDelay: true
-      retryInterval: 3
-      token: "service-specific-token"
-      type: tcp
   transport:
     noise:
       localPrivateKey: "Base64EncodedPrivateKey"
       pattern: "Noise_NK_25519_ChaChaPoly_BLAKE2s"
       remotePublicKey: "Base64EncodedPublicKey"
-    tcp:
-      keepaliveInterval: 10
-      keepaliveSecs: 25
-      noDelay: true
-      proxy: "http://proxy.example.com:3128"
+  services:
+    - localAddr: "localhost:8080"
+      token: "service-specific-token"
+      type: tcp
