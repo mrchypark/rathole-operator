@@ -17,7 +17,7 @@
 		},
 		"./local-features/copy-kube-config": {},
 		"ghcr.io/devcontainers-contrib/features/asdf-package:1": {},
-		"ghcr.io/devcontainers-contrib/features/elixir-asdf:2": {},
+		"ghcr.io/devcontainers-contrib/features/elixir-asdf:2": {"elixirVersion": "1.15"},
 		"ghcr.io/devcontainers-contrib/features/kubectl-asdf:2": {}
 	},
 
