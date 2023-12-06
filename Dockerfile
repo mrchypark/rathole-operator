@@ -2,7 +2,7 @@
 ###### Build Image ######
 #########################
 
-FROM elixir:1.14 as builder
+FROM elixir:1.15 as builder
 
 ENV MIX_ENV=prod \
   MIX_HOME=/opt/mix \
