@@ -37,6 +37,16 @@
 			"source": "${env:HOME}${env:USERPROFILE}/.minikube",
 			"target": "/usr/local/share/minikube-localhost",
 			"type": "bind"
+		},
+		{
+			"source": "${localEnv:HOME}${localEnv:USERPROFILE}/.ssh/",
+			"target": "/root/.ssh",
+			"type": "bind"
+		},
+		{
+			"source": "${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig",
+			"target": "/root/.gitconfig",
+			"type": "bind"
 		}
 	],
 	"customizations": {
@@ -45,7 +55,7 @@
 				"JakeBecker.elixir-ls"
 			]
 		}
-	}
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
@@ -57,5 +67,5 @@
 	// "customizations": {},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+	"remoteUser": "root"
 }
