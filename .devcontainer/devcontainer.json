@@ -3,8 +3,10 @@
 {
 	"name": "elixir with local k8s",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/base:bullseye",
-
+	"build": {
+		// Path is relataive to the devcontainer.json file.
+		"dockerfile": "Dockerfile"
+	},
 	"features": {
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
 			"enableNonRootDocker": "true",
@@ -52,10 +54,12 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"JakeBecker.elixir-ls"
+				"JakeBecker.elixir-ls",
+				"Terrastruct.d2",
+				"kdheepak.d2-markdown-preview"
 			]
 		}
-	},
+	}
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],

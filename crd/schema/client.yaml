@@ -3,106 +3,76 @@ openAPIV3Schema:
   properties:
     spec:
       type: object
+      required:
+      - serverRef
       properties:
-        remoteAddr:
+        serverRef:
           type: string
-          description: "The address of the server. This field is necessary."
-        defaultToken:
-          type: string
-          description: "The default token of services, if they don't define their own ones. This field is optional."
-          default: "default_token_if_not_specify"
+          description: "Reference to the server. This field is required."
         heartbeatTimeout:
           type: integer
-          description: "Set to 0 to disable the application-layer heartbeat test. This field is optional."
           default: 40
+          description: "Specifies the heartbeat timeout in seconds. Default is 40."
         retryInterval:
           type: integer
-          description: "The interval between retry to connect to the server. This field is optional."
           default: 1
-        transport:
+          description: "Specifies the interval between retries in seconds. Default is 1."
+        configTo:
           type: object
           properties:
             type:
               type: string
-              description: "Specify which transport to use. This block is optional."
-              # TODO: impliment tls, websocket
-              enum: ["tcp", "noise"]
-              default: "tcp"
-            tcp:
-              type: object
-              description: "TCP transport settings. This block also affects `noise` and `tls`."
-              properties:
-                proxy:
-                  type: string
-                  description: "The proxy used to connect to the server. `http` and `socks5` is supported. This field is optional."
-                noDelay:
-                  type: boolean
-                  description: "Determine whether to enable TCP_NODELAY. This field is optional."
-                  default: true
-                keepaliveSecs:
-                  type: integer
-                  description: "Specify `tcp_keepalive_time` in `tcp(7)`. This field is optional."
-                  default: 20
-                keepaliveInterval:
-                  type: integer
-                  description: "Specify `tcp_keepalive_intvl` in `tcp(7)`. This field is optional."
-                  default: 8
-            # tls:
-            #   type: object
-            #   description: "TLS transport settings. Necessary if `type` is 'tls'."
-            #   properties:
-            #     trustedRoot:
-            #       type: string
-            #       description: "The certificate of CA that signed the server's certificate. This field is necessary."
-            #     hostname:
-            #       type: string
-            #       description: "The hostname that the client uses to validate the certificate. If not set, fallback to `client.remoteAddr`. This field is optional."
-            noise:
-              type: object
-              description: "Noise protocol settings. See `docs/transport.md` for further explanation."
-              properties:
-                pattern:
-                  type: string
-                  description: "Noise protocol pattern. This field is optional."
-                  default: "Noise_NK_25519_ChaChaPoly_BLAKE2s"
-                localPrivateKey:
-                  type: string
-                  description: "Local private key, encoded in Base64. This field is optional."
-                remotePublicKey:
-                  type: string
-                  description: "Remote public key, encoded in Base64. This field is optional."
-            # websocket:
-            #   type: object
-            #   description: "Websocket transport settings. Necessary if `type` is 'websocket'."
-            #   properties:
-            #     tls:
-            #       type: boolean
-            #       description: "If `true`, it will use settings in `client.transport.tls`. This field is optional."
-            #       default: true
+              default: "secret"
+              enum: 
+              - "secret"
+              description: "Type of configuration destination, currently only 'secret' is supported."
+            name:
+              type: string
+              description: "Name of the configration file name."
+          required:
+          - type
+          - name
         services:
           type: array
-          description: "Services that need forwarding."
           items:
             type: object
             properties:
+              name:
+                type: string
+                description: "Name of the service. This field is required."
               type:
                 type: string
-                description: "The protocol that needs forwarding. This field is optional."
-                enum: ["tcp", "udp"]
+                enum: 
+                - "tcp"
+                - "udp"
                 default: "tcp"
+                description: "Optional. The protocol that needs forwarding. Possible values: ['tcp', 'udp']. Default: tcp"
               token:
-                type: string
-                description: "Token for the service. Necessary if `client.defaultToken` not set."
+                type: object
+                properties:
+                  key: 
+                    type: string
+                    description: "Optional. Sets the service token directly."
+                  secretRef:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: "Name of the secret reference for token. Required if 'token' is specified."
+                      key:
+                        type: string
+                        description: "Key of the secret reference for token. Required if 'token' is specified."
               localAddr:
                 type: string
-                description: "The address of the service that needs to be forwarded. This field is necessary."
-              noDelay:
+                description: "Necessary. The address of the service that needs to be forwarded."
+              nodelay:
                 type: boolean
-                description: "Override the `client.transport.noDelay` per service. This field is optional."
                 default: true
+                description: "Optional. Override the `client.transport.nodelay` per service."
               retryInterval:
-                type: integer
-                description: "The interval between retry to connect to the server. This field is optional."
+                type: number
                 default: 1
-      required:
-        - remoteAddr
+                description: "Specifies the retry interval for the service in seconds. Default is 1. If not set, inherits the global config"
+            required:
+            - name
+            - localAddr

@@ -1,0 +1,24 @@
+apiVersion: rathole.mrchypark.github.io/v1alpha1
+kind: Server
+metadata:
+  name: example-server
+  namespace: test
+spec:
+  bindAddr:
+    ip: "0.0.0.0"
+    port: 2333
+  defaultToken: "example-token"
+  exposeAddr:
+    addr: "host.example.com:2333"
+    ip: "192.168.1.1"
+    port: 2333
+  heartbeatInterval: 30
+  transport:
+    type: "noise"
+    noise:
+      noisekeyLocal:
+        key: "example-noise-key"
+        secretRef:
+          name: "noise-secret"
+          key: "noise-key"
+      pattern: "Noise_NK_25519_ChaChaPoly_BLAKE2s"

@@ -47,6 +47,5 @@ defmodule Rathole.API.V1Alpha1.Client do
     defaults()
     |> struct!(schema: value)
     |> add_observed_generation_status()
-    |> add_conditions()
   end
 end

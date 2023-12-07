@@ -1,0 +1,14 @@
+apiVersion: rathole.mrchypark.github.io/v1alpha1
+kind: Server
+metadata:
+  name: simple-server
+  namespace: test
+spec:
+  bindAddr:
+    ip: "0.0.0.0"
+    port: 2333
+  exposeAddr:
+    ip: "192.168.1.1"
+    port: 2333
+  transport:
+    type: "noise"

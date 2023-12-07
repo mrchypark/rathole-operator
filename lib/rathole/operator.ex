@@ -30,13 +30,6 @@ defmodule Rathole.Operator do
             namespace: watching_namespace
           ),
         controller: Rathole.Controller.ServerController
-      },
-      %{
-        query:
-          K8s.Client.watch("rathole.mrchypark.github.io/v1alpha1", "noisekeys",
-            namespace: watching_namespace
-          ),
-        controller: Rathole.Controller.NoiseKeyController
       }
     ]
   end
@@ -64,17 +57,6 @@ defmodule Rathole.Operator do
         },
         group: "rathole.mrchypark.github.io",
         versions: [:"Elixir.Rathole.API.V1Alpha1.Server"],
-        scope: :Namespaced
-      },
-      %Bonny.API.CRD{
-        names: %{
-          kind: "NoiseKey",
-          plural: "noisekeys",
-          shortNames: ["nk", "nsk"],
-          singular: "noisekey"
-        },
-        group: "rathole.mrchypark.github.io",
-        versions: [:"Elixir.Rathole.API.V1Alpha1.NoiseKey"],
         scope: :Namespaced
       }
     ]

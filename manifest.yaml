@@ -19,125 +19,90 @@ spec:
             status:
               type: object
               properties:
-                conditions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      message:
-                        type: string
-                      status:
-                        type: string
-                        enum:
-                          - 'True'
-                          - 'False'
-                      type:
-                        type: string
-                      lastHeartbeatTime:
-                        type: string
-                        format: date-time
-                      lastTransitionTime:
-                        type: string
-                        format: date-time
                 observedGeneration:
                   type: integer
         openAPIV3Schema:
           properties:
             spec:
               properties:
-                defaultToken:
-                  default: default_token_if_not_specify
-                  description: The default token of services, if they don't define their own ones. This field is optional.
-                  type: string
+                configTo:
+                  properties:
+                    name:
+                      description: Name of the configration file name.
+                      type: string
+                    type:
+                      default: secret
+                      description: Type of configuration destination, currently only 'secret' is supported.
+                      enum:
+                        - secret
+                      type: string
+                  required:
+                    - type
+                    - name
+                  type: object
                 heartbeatTimeout:
                   default: 40
-                  description: Set to 0 to disable the application-layer heartbeat test. This field is optional.
+                  description: Specifies the heartbeat timeout in seconds. Default is 40.
                   type: integer
-                remoteAddr:
-                  description: The address of the server. This field is necessary.
-                  type: string
                 retryInterval:
                   default: 1
-                  description: The interval between retry to connect to the server. This field is optional.
+                  description: Specifies the interval between retries in seconds. Default is 1.
                   type: integer
+                serverRef:
+                  description: Reference to the server. This field is required.
+                  type: string
                 services:
-                  description: Services that need forwarding.
                   items:
                     properties:
                       localAddr:
-                        description: The address of the service that needs to be forwarded. This field is necessary.
+                        description: Necessary. The address of the service that needs to be forwarded.
                         type: string
-                      noDelay:
+                      name:
+                        description: Name of the service. This field is required.
+                        type: string
+                      nodelay:
                         default: true
-                        description: Override the `client.transport.noDelay` per service. This field is optional.
+                        description: Optional. Override the `client.transport.nodelay` per service.
                         type: boolean
                       retryInterval:
                         default: 1
-                        description: The interval between retry to connect to the server. This field is optional.
-                        type: integer
+                        description: Specifies the retry interval for the service in seconds. Default is 1. If not set, inherits the global config
+                        type: number
                       token:
-                        description: Token for the service. Necessary if `client.defaultToken` not set.
-                        type: string
+                        properties:
+                          key:
+                            description: Optional. Sets the service token directly.
+                            type: string
+                          secretRef:
+                            properties:
+                              key:
+                                description: Key of the secret reference for token. Required if 'token' is specified.
+                                type: string
+                              name:
+                                description: Name of the secret reference for token. Required if 'token' is specified.
+                                type: string
+                            type: object
+                        type: object
                       type:
                         default: tcp
-                        description: The protocol that needs forwarding. This field is optional.
+                        description: "Optional. The protocol that needs forwarding. Possible values: ['tcp', 'udp']. Default: tcp"
                         enum:
                           - tcp
                           - udp
                         type: string
+                    required:
+                      - name
+                      - localAddr
                     type: object
                   type: array
-                transport:
-                  properties:
-                    noise:
-                      description: Noise protocol settings. See `docs/transport.md` for further explanation.
-                      properties:
-                        localPrivateKey:
-                          description: Local private key, encoded in Base64. This field is optional.
-                          type: string
-                        pattern:
-                          default: Noise_NK_25519_ChaChaPoly_BLAKE2s
-                          description: Noise protocol pattern. This field is optional.
-                          type: string
-                        remotePublicKey:
-                          description: Remote public key, encoded in Base64. This field is optional.
-                          type: string
-                      type: object
-                    tcp:
-                      description: TCP transport settings. This block also affects `noise` and `tls`.
-                      properties:
-                        keepaliveInterval:
-                          default: 8
-                          description: Specify `tcp_keepalive_intvl` in `tcp(7)`. This field is optional.
-                          type: integer
-                        keepaliveSecs:
-                          default: 20
-                          description: Specify `tcp_keepalive_time` in `tcp(7)`. This field is optional.
-                          type: integer
-                        noDelay:
-                          default: true
-                          description: Determine whether to enable TCP_NODELAY. This field is optional.
-                          type: boolean
-                        proxy:
-                          description: The proxy used to connect to the server. `http` and `socks5` is supported. This field is optional.
-                          type: string
-                      type: object
-                    type:
-                      default: tcp
-                      description: Specify which transport to use. This block is optional.
-                      enum:
-                        - tcp
-                        - noise
-                      type: string
-                  type: object
               required:
-                - remoteAddr
+                - serverRef
               type: object
           type: object
+      storage: true
       subresources:
         status: {}
       served: true
-      storage: true
       deprecationWarning:
       additionalPrinterColumns: []
 metadata:
@@ -168,26 +133,6 @@ spec:
             status:
               type: object
               properties:
-                conditions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      message:
-                        type: string
-                      status:
-                        type: string
-                        enum:
-                          - 'True'
-                          - 'False'
-                      type:
-                        type: string
-                      lastHeartbeatTime:
-                        type: string
-                        format: date-time
-                      lastTransitionTime:
-                        type: string
-                        format: date-time
                 observedGeneration:
                   type: integer
         openAPIV3Schema:
@@ -195,163 +140,114 @@ spec:
             spec:
               properties:
                 bindAddr:
-                  description: The address that the server listens for clients. This field is necessary.
-                  type: string
+                  description: IP address must be a valid IPv4 address in the format of 0.0.0.0
+                  properties:
+                    ip:
+                      default: 0.0.0.0
+                      description: IP address must be a valid IPv4 address in the format of 0.0.0.0
+                      pattern: ^(([0-9]{1,3}).){3}[0-9]{1,3}$
+                      type: string
+                    port:
+                      default: 2333
+                      description: Port number must be an integer between 0 and 65535.
+                      format: int32
+                      maximum: 65535
+                      minimum: 0
+                      type: integer
+                  required:
+                    - ip
+                    - port
+                  type: object
                 defaultToken:
-                  description: The default token of services. This field is optional.
-                  type: string
+                  description: Optional. Global token for service.
+                  properties:
+                    key:
+                      description: Optional. Sets the token directly.
+                      type: string
+                    secretRef:
+                      description: Optional. Sets the secret reference
+                      properties:
+                        key:
+                          description: Name of the key within the secret to be referenced.
+                          type: string
+                        name:
+                          description: Name of the secret resource to be referenced.
+                          type: string
+                      type: object
+                  type: object
                 exposeAddr:
-                  description: The address of the server. This field is necessary.
-                  type: string
+                  description: Specifies the address to be exposed. This must be set as required. Host:port.
+                  properties:
+                    addr:
+                      description: Addr is host url for expose.
+                      type: string
+                    ip:
+                      description: IP address must be a valid IPv4 address in the format of 0.0.0.0
+                      pattern: ^(([0-9]{1,3}).){3}[0-9]{1,3}$
+                      type: string
+                    port:
+                      default: 2333
+                      description: Port number must be an integer between 0 and 65535.
+                      format: int32
+                      maximum: 65535
+                      minimum: 0
+                      type: integer
+                  required:
+                    - port
+                  type: object
                 heartbeatInterval:
                   default: 30
-                  description: The interval between two application-layer heartbeats. This field is optional.
+                  description: 'Optional. The interval between two application-layer heartbeat. Set to 0 to disable sending heartbeat. Default: 30 seconds.'
                   type: integer
-                services:
-                  description: The services that the server exposes.
-                  items:
-                    properties:
-                      bindAddr:
-                        description: The address of the service is exposed at. This field is necessary.
-                        type: string
-                      noDelay:
-                        default: true
-                        description: Override the `server.transport.noDelay` per service. This field is optional.
-                        type: boolean
-                      token:
-                        description: Token for the service. Necessary if `server.defaultToken` not set.
-                        type: string
-                      type:
-                        default: tcp
-                        description: The protocol of the service. This field is optional.
-                        enum:
-                          - tcp
-                          - udp
-                        type: string
-                    type: object
-                  type: array
                 transport:
                   properties:
                     noise:
-                      description: Noise protocol settings. See `https://github.com/rapiz1/rathole/blob/main/docs/transport.md` for further explanation.
                       properties:
-                        localPrivateKey:
-                          description: Local private key, encoded in Base64. This field is optional.
-                          type: string
+                        noisekeyLocal:
+                          properties:
+                            key:
+                              description: Optional. Sets the noise key directly.
+                              type: string
+                            secretRef:
+                              description: Optional. Sets the secret reference
+                              properties:
+                                key:
+                                  description: Name of the key within the secret to be referenced.
+                                  type: string
+                                name:
+                                  description: Name of the secret resource to be referenced.
+                                  type: string
+                              type: object
+                          type: object
                         pattern:
                           default: Noise_NK_25519_ChaChaPoly_BLAKE2s
                           description: Noise protocol pattern. This field is optional.
                           type: string
-                        remotePublicKey:
-                          description: Remote public key, encoded in Base64. This field is optional.
-                          type: string
-                      type: object
-                    tcp:
-                      description: TCP transport settings.
-                      properties:
-                        keepaliveInterval:
-                          default: 8
-                          description: Specify `tcp_keepalive_intvl` in `tcp(7)`. This field is optional.
-                          type: integer
-                        keepaliveSecs:
-                          default: 20
-                          description: Specify `tcp_keepalive_time` in `tcp(7)`. This field is optional.
-                          type: integer
-                        noDelay:
-                          default: true
-                          description: Determine whether to enable TCP_NODELAY. This field is optional.
-                          type: boolean
                       type: object
                     type:
                       default: tcp
-                      description: Specify which transport to use. This field is optional.
+                      description: Transport type must be either 'tcp' or 'noise'.
                       enum:
                         - tcp
                         - noise
                       type: string
+                  required:
+                    - type
                   type: object
               required:
                 - bindAddr
+                - exposeAddr
+                - transport
               type: object
           type: object
+      storage: true
       subresources:
         status: {}
       served: true
-      storage: true
       deprecationWarning:
       additionalPrinterColumns: []
 metadata:
   name: servers.rathole.mrchypark.github.io
-  labels:
-    k8s-app: rathole
-kind: CustomResourceDefinition
-apiVersion: apiextensions.k8s.io/v1
-
----
-spec:
-  scope: Namespaced
-  group: rathole.mrchypark.github.io
-  names:
-    kind: NoiseKey
-    plural: noisekeys
-    singular: noisekey
-    shortNames:
-      - nk
-      - nsk
-  versions:
-    - name: v1alpha1
-      deprecated: false
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            status:
-              type: object
-              properties:
-                conditions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      message:
-                        type: string
-                      status:
-                        type: string
-                        enum:
-                          - 'True'
-                          - 'False'
-                      type:
-                        type: string
-                      lastHeartbeatTime:
-                        type: string
-                        format: date-time
-                      lastTransitionTime:
-                        type: string
-                        format: date-time
-                observedGeneration:
-                  type: integer
-        openAPIV3Schema:
-          properties:
-            spec:
-              properties:
-                privateKeyField:
-                  default: private
-                  type: string
-                publicKeyField:
-                  default: public
-                  type: string
-                secretName:
-                  type: string
-              type: object
-          type: object
-      subresources:
-        status: {}
-      served: true
-      storage: true
-      deprecationWarning:
-      additionalPrinterColumns: []
-metadata:
-  name: noisekeys.rathole.mrchypark.github.io
   labels:
     k8s-app: rathole
 kind: CustomResourceDefinition
@@ -391,18 +287,6 @@ rules:
       - '*'
   - resources:
       - clients/status
-    apiGroups:
-      - rathole.mrchypark.github.io
-    verbs:
-      - '*'
-  - resources:
-      - noisekeys
-    apiGroups:
-      - rathole.mrchypark.github.io
-    verbs:
-      - '*'
-  - resources:
-      - noisekeys/status
     apiGroups:
       - rathole.mrchypark.github.io
     verbs:
