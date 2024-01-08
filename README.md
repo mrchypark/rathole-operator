@@ -64,3 +64,13 @@ servername-config는 server에서 마운트해서 사용 상태.
 
 
       
+## set k8s env
+
+use k3d
+
+```sh
+# install
+wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+# create cluster
+k3d cluster create mycluster
+```

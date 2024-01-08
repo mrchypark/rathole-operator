@@ -1,3 +1,1 @@
-FROM mcr.microsoft.com/devcontainers/base:bullseye
-
-RUN curl -fsSL https://d2lang.com/install.sh | sh -s --
+FROM mcr.microsoft.com/devcontainers/rust:1.0.6-bookworm
