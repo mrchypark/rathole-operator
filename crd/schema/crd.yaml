@@ -1,0 +1,229 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clients.rathole.mrchypark.github.io
+spec:
+  group: rathole.mrchypark.github.io
+  names:
+    categories: []
+    kind: Client
+    plural: clients
+    shortNames: []
+    singular: client
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns: []
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Auto-generated derived type for ClientSpec via `CustomResource`
+        properties:
+          spec:
+            properties:
+              configTo:
+                properties:
+                  name:
+                    nullable: true
+                    type: string
+                  namespace:
+                    nullable: true
+                    type: string
+                  type:
+                    default: secret
+                    enum:
+                    - secret
+                    type: string
+                type: object
+              heartbeatTimeout:
+                default: 30
+                description: Timeout for the heartbeat signal in seconds.
+                format: int32
+                type: integer
+              retryInterval:
+                default: 1
+                format: int32
+                type: integer
+              serverRef:
+                type: string
+              services:
+                items:
+                  properties:
+                    localAddr:
+                      type: string
+                    name:
+                      type: string
+                    nodelay:
+                      default: true
+                      type: boolean
+                    retryInterval:
+                      default: 1
+                      format: int32
+                      type: integer
+                    token:
+                      properties:
+                        key:
+                          nullable: true
+                          type: string
+                        secretRef:
+                          nullable: true
+                          properties:
+                            key:
+                              type: string
+                            name:
+                              type: string
+                          required:
+                          - key
+                          - name
+                          type: object
+                        type:
+                          enum:
+                          - direct
+                          - reference
+                          type: string
+                      required:
+                      - type
+                      type: object
+                    type:
+                      enum:
+                      - noise
+                      - tcp
+                      - tls
+                      - websocket
+                      type: string
+                  required:
+                  - localAddr
+                  - name
+                  - token
+                  - type
+                  type: object
+                type: array
+            required:
+            - configTo
+            - serverRef
+            - services
+            type: object
+          status:
+            nullable: true
+            properties:
+              is_ok:
+                type: boolean
+            required:
+            - is_ok
+            type: object
+        required:
+        - spec
+        title: Client
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: servers.rathole.mrchypark.github.io
+spec:
+  group: rathole.mrchypark.github.io
+  names:
+    categories: []
+    kind: Server
+    plural: servers
+    shortNames: []
+    singular: server
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns: []
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Auto-generated derived type for ServerSpec via `CustomResource`
+        properties:
+          spec:
+            properties:
+              bindAddr:
+                type: string
+              defaultToken:
+                type: string
+              exposeAddr:
+                type: string
+              heartbeatInterval:
+                default: 30
+                format: int32
+                type: integer
+              transport:
+                properties:
+                  noise:
+                    nullable: true
+                    properties:
+                      noisekey:
+                        properties:
+                          key:
+                            nullable: true
+                            type: string
+                          secretRef:
+                            nullable: true
+                            properties:
+                              key:
+                                type: string
+                              name:
+                                type: string
+                            required:
+                            - key
+                            - name
+                            type: object
+                          type:
+                            enum:
+                            - direct
+                            - reference
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      pattern:
+                        default: Noise_NK_25519_ChaChaPoly_BLAKE2s
+                        type: string
+                    required:
+                    - noisekey
+                    type: object
+                  tcp:
+                    nullable: true
+                    type: string
+                  tls:
+                    nullable: true
+                    type: string
+                  type:
+                    enum:
+                    - noise
+                    - tcp
+                    - tls
+                    - websocket
+                    type: string
+                  websocket:
+                    nullable: true
+                    type: string
+                required:
+                - type
+                type: object
+            required:
+            - bindAddr
+            - defaultToken
+            - exposeAddr
+            - transport
+            type: object
+          status:
+            nullable: true
+            properties:
+              is_ok:
+                type: boolean
+            required:
+            - is_ok
+            type: object
+        required:
+        - spec
+        title: Server
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
