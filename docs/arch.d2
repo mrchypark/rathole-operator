@@ -1,0 +1,36 @@
+serverCRD: {
+  secretRef
+}
+
+
+clientCRD: {
+  secretRef
+  services: {
+      style.multiple: true
+  }
+}
+
+clientCRD -> clientSecret
+
+clientCRD.services -> serverSecret 
+
+serverCRD -> serverSecret
+
+server: {
+    services: {
+        style.multiple: true
+    }
+}
+
+server -- serverSecret: mount
+
+clientSecret
+serverSecret
+tokenSecret -> serverCRD.secretRef
+tokenSecret -> clientCRD.secretRef
+
+edgeConfig: {
+  shape: person
+}
+
+edgeConfig <- clientSecret
