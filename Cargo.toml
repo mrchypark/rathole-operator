@@ -1,25 +1,27 @@
 [package]
 name = "rathole-operator"
-version = "0.1.0"
+version = "0.0.2"
 edition = "2021"
 default-run = "rathole-operator"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = {version = "1.0.79"}
-thiserror ={ version = "1.0.56"}
-futures ={ version = "0.3.30"}
-tokio = {version = "1.35.1", features = ["macros", "rt-multi-thread"]}
+anyhow = { version = "1.0.79" }
+thiserror = { version = "1.0.56" }
+futures = { version = "0.3.30" }
+tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread"] }
 
-kube = {version = "0.87.2", features = ["runtime", "derive", "client"]}
-schemars = {version = "0.8.16"}
-k8s-openapi = {version = "0.20.0", default-features = false, features = ["v1_27"]}
+kube = { version = "0.87.2", features = ["runtime", "derive", "client"] }
+schemars = { version = "0.8.16" }
+k8s-openapi = { version = "0.20.0", default-features = false, features = [
+  "v1_27",
+] }
 
-serde = {version = "1.0.195"}
-serde_json = {version = "1.0.111"}
-serde_yaml = {version = "0.9.30"}
-tracing-subscriber = {version = "0.3.18"}
+serde = { version = "1.0.195" }
+serde_json = { version = "1.0.111" }
+serde_yaml = { version = "0.9.30" }
+tracing-subscriber = { version = "0.3.18" }
 
 [[bin]]
 name = "crdgen"
