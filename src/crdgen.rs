@@ -4,6 +4,8 @@ pub mod crd;
 
 fn main() {
     print!("{}", serde_yaml::to_string(&RH_Client::crd()).unwrap());
+
     println!("---");
+    
     print!("{}", serde_yaml::to_string(&RH_Server::crd()).unwrap());
 }
