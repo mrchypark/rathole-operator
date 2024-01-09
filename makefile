@@ -4,6 +4,15 @@ crd: src/crd.rs src/crdgen.rs
 apply-crd: crd
 	kubectl apply -f crd/schema/crd.yaml
 
+set-example:
+	kubectl apply -f crd/example/simple/.
+
+del-example:
+	kubectl apply -f crd/example/simple/.
+
+run: crd/schema/crd.yaml
+	cargo run
+
 set-cluster:
 	k3d cluster create test 
 

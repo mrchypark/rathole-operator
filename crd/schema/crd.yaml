@@ -79,9 +79,8 @@ spec:
                           enum:
                           - direct
                           - reference
+                          nullable: true
                           type: string
-                      required:
-                      - type
                       type: object
                     type:
                       enum:
@@ -89,12 +88,12 @@ spec:
                       - tcp
                       - tls
                       - websocket
+                      nullable: true
                       type: string
                   required:
                   - localAddr
                   - name
                   - token
-                  - type
                   type: object
                 type: array
             required:
@@ -144,6 +143,7 @@ spec:
               bindAddr:
                 type: string
               defaultToken:
+                nullable: true
                 type: string
               exposeAddr:
                 type: string
@@ -176,9 +176,8 @@ spec:
                             enum:
                             - direct
                             - reference
+                            nullable: true
                             type: string
-                        required:
-                        - type
                         type: object
                       pattern:
                         default: Noise_NK_25519_ChaChaPoly_BLAKE2s
@@ -207,7 +206,6 @@ spec:
                 type: object
             required:
             - bindAddr
-            - defaultToken
             - exposeAddr
             - transport
             type: object
