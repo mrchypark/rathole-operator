@@ -8,7 +8,7 @@ set-example:
 	kubectl apply -f crd/example/simple/.
 
 del-example:
-	kubectl apply -f crd/example/simple/.
+	kubectl delete -f crd/example/simple/.
 
 run: crd/schema/crd.yaml
 	cargo run

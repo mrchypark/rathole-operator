@@ -9,9 +9,10 @@ use serde::{Deserialize, Serialize};
 	kind = "Client",
 	plural = "clients",
 	derive = "PartialEq",
+	shortname = "cl",
+	status = "ClientStatus",
 	namespaced
 )]
-#[kube(status = "ClientStatus")]
 pub struct ClientSpec {
 	#[serde(rename(deserialize = "serverRef"))]
 	pub server_ref: String,
@@ -84,9 +85,10 @@ pub struct ClientStatus {
 	plural = "servers",
 	derive = "PartialEq",
 	derive = "Default",
+	shortname = "srv",
+	status = "ServerStatus",
 	namespaced
 )]
-#[kube(status = "ServerStatus")]
 pub struct ServerSpec {
 	#[serde(rename(deserialize = "bindAddr"))]
 	pub bind_addr: String,

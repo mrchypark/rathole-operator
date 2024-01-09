@@ -8,7 +8,8 @@ spec:
     categories: []
     kind: Client
     plural: clients
-    shortNames: []
+    shortNames:
+    - cl
     singular: client
   scope: Namespaced
   versions:
@@ -128,7 +129,8 @@ spec:
     categories: []
     kind: Server
     plural: servers
-    shortNames: []
+    shortNames:
+    - srv
     singular: server
   scope: Namespaced
   versions:
