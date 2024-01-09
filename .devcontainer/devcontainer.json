@@ -36,6 +36,7 @@
 			"rust-lang.rust-analyzer",
 			"humao.rest-client",
 			"mhutchie.git-graph",
+      "ms-vscode.makefile-tools",
 			"mutantdino.resourcemonitor"
 		]
 	},
