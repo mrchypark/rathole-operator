@@ -1,33 +1,19 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/kubernetes-helm
+// README at: https://github.com/devcontainers/templates/tree/main/src/rust
 {
-	"name": "Rust with Kubernetes",
+	"name": "Rust",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"build": {
 		// Path is relataive to the devcontainer.json file.
 		"dockerfile": "Dockerfile"
 	},
 	"features": {
-		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
-			"enableNonRootDocker": "true",
-			"moby": "true"
-		},
-		"ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
-		"./local-features/copy-kube-config": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
+		"ghcr.io/rio/features/k3d:1": {}
 	},
-
-	"remoteEnv": {
-		"SYNC_LOCALHOST_KUBECONFIG": "true"
-	},
-
-	"initializeCommand": "cd .devcontainer && bash ensure-mount-sources",
 
   "mounts": [
-    {
-			"source": "${env:HOME}${env:USERPROFILE}/.kube",
-			"target": "/usr/local/share/kube-localhost",
-			"type": "bind"
-		},
 		{
 			"source": "devcontainer-cargo-cache-${devcontainerId}",
 			"target": "/usr/local/cargo",
@@ -58,7 +44,7 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "rustc --version",
+	"postCreateCommand": "k3d cluster create test",
 	// Configure tool-specific properties.
 	// "customizations": {},
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.

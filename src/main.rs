@@ -1,22 +1,34 @@
-use kube::{client::Client, Api, api::Patch, api::PatchParams};
-use k8s_openapi::apiextensions_apiserver::pkg::apis::apiextensions::v1::CustomResourceDefinition;
+use std::{sync::Arc, time::Duration};
+use futures::StreamExt;
+use k8s_openapi::api::core::v1::Pod;
+use kube::{
+    Api, Client, ResourceExt,
+    runtime::controller::{Action, Controller}
+};
 
-use crate::crd::{Server, Client};
-pub mod crd;
+#[derive(thiserror::Error, Debug)]
+pub enum Error {}
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()>{
+async fn main() -> Result<(), kube::Error> {
+  println!("start");
+    let client = Client::try_default().await?;
+    let pods = Api::<Pod>::all(client);
 
-  tracing_subscriber::fmt::init();
+    Controller::new(pods.clone(), Default::default())
+        .run(reconcile, error_policy, Arc::new(()))
+        .for_each(|_| futures::future::ready(()))
+        .await;
 
-  let client: Client = Client::try_default()
-    .await
-    .expect("hi!");
+    Ok(())
+}
 
-  let rh_client = PatchParams::apply("client_apply").force();
-  let crdClient: Api<CustomResourceDefinition> = Api::all(client.clone());
+async fn reconcile(obj: Arc<Pod>, _ctx: Arc<()>) -> Result<Action> {
+    println!("reconcile request: {}", obj.name_any());
+    Ok(Action::requeue(Duration::from_secs(10)))
+}
 
-  crdClient.patch(crdName, rh_client, &Patch::Apply(&Client::crd()));
-
-  Ok(())    
+fn error_policy(_object: Arc<Pod>, _err: &Error, _ctx: Arc<()>) -> Action {
+    Action::requeue(Duration::from_secs(5))
 }
