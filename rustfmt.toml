@@ -1,0 +1,5 @@
+edition = "2021"
+hard_tabs = true
+match_arm_leading_pipes = "Preserve"
+match_block_trailing_comma = true
+tab_spaces = 2
