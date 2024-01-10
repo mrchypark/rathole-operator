@@ -49,5 +49,5 @@ pub async fn run() {
 		.run(cli_reconcile, cli_error_policy, Arc::new(()))
 		.for_each(|_| futures::future::ready(()));
 
-	futures::join!(srv_con, cli_con);
+	let _ = futures::join!(srv_con, cli_con);
 }
