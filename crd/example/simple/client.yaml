@@ -1,0 +1,19 @@
+apiVersion: rathole.mrchypark.github.io/v1alpha1
+kind: Client
+metadata:
+  name: simple
+  namespace: test
+spec:
+  serverRef: "simple-server"
+  configTo:
+    name: "simplessh"
+    namespace: "test"
+  services:
+    - name: "rathole-ssh"
+      localAddr: 
+        host: "127.0.0.1"
+        port: 22
+      token:
+        secretRef:
+          name: "secret-name"
+          key: "secret-key"

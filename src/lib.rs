@@ -16,8 +16,14 @@ pub enum Error {
 	// so boxing this error to break cycles
 	FinalizerError(#[source] Box<kube::runtime::finalizer::Error<Error>>),
 
-	#[error("IllegalDocument")]
-	IllegalDocument,
+	#[error("Failed to create ConfigMap: {0}")]
+	ConfigMapCreationFailed(#[source] kube::Error),
+
+	#[error("Failed to create Deplyment: {0}")]
+	DeplymentCreationFailed(#[source] kube::Error),
+
+	#[error("MissingObjectKey: {0}")]
+	MissingObjectKey(&'static str),
 
 	#[error("Error: {0}")]
 	DefaultError(#[source] std::io::Error),
@@ -38,4 +44,4 @@ pub use crate::controller::*;
 pub mod telemetry;
 
 pub mod crd;
-pub mod genkey;
+pub mod rathole;

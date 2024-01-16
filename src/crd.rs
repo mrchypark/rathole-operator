@@ -53,7 +53,7 @@ fn client_config_type_defualt() -> ClientConfigType {
 pub struct ServiceConfig {
 	pub name: String,
 	#[serde(rename(deserialize = "localAddr"))]
-	pub local_addr: String,
+	pub local_addr: Uri,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub r#type: Option<TransportType>,
 	#[serde(default = "nodelay_default")]
@@ -91,16 +91,28 @@ pub struct ClientStatus {
 )]
 pub struct ServerSpec {
 	#[serde(rename(deserialize = "bindAddr"))]
-	pub bind_addr: String,
+	pub bind_addr: Uri,
 	#[serde(rename(deserialize = "defaultToken"))]
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub default_token: Option<String>,
 	#[serde(rename(deserialize = "exposeAddr"))]
-	pub expose_addr: String,
+	pub expose_addr: Uri,
 	#[serde(default = "heartbeat_interval_default")]
 	#[serde(rename(deserialize = "heartbeatInterval"))]
 	pub heartbeat_interval: i32,
 	pub transport: Transport,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, PartialEq, Clone, JsonSchema)]
+pub struct Uri {
+	#[serde(default = "schema_default")]
+	pub schema: String,
+	pub host: String,
+	pub port: i32,
+}
+
+fn schema_default() -> String {
+	"http".into()
 }
 
 fn heartbeat_interval_default() -> i32 {
@@ -172,5 +184,6 @@ pub enum SecretType {
 
 #[derive(Serialize, Deserialize, Debug, Default, PartialEq, Clone, JsonSchema)]
 pub struct ServerStatus {
-	pub is_ok: bool,
+	pub is_ready: bool,
+	pub expose_addr: String,
 }

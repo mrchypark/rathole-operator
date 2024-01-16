@@ -50,7 +50,19 @@ spec:
                 items:
                   properties:
                     localAddr:
-                      type: string
+                      properties:
+                        host:
+                          type: string
+                        port:
+                          format: int32
+                          type: integer
+                        schema:
+                          default: http
+                          type: string
+                      required:
+                      - host
+                      - port
+                      type: object
                     name:
                       type: string
                     nodelay:
@@ -143,12 +155,36 @@ spec:
           spec:
             properties:
               bindAddr:
-                type: string
+                properties:
+                  host:
+                    type: string
+                  port:
+                    format: int32
+                    type: integer
+                  schema:
+                    default: http
+                    type: string
+                required:
+                - host
+                - port
+                type: object
               defaultToken:
                 nullable: true
                 type: string
               exposeAddr:
-                type: string
+                properties:
+                  host:
+                    type: string
+                  port:
+                    format: int32
+                    type: integer
+                  schema:
+                    default: http
+                    type: string
+                required:
+                - host
+                - port
+                type: object
               heartbeatInterval:
                 default: 30
                 format: int32
@@ -214,10 +250,13 @@ spec:
           status:
             nullable: true
             properties:
-              is_ok:
+              expose_addr:
+                type: string
+              is_ready:
                 type: boolean
             required:
-            - is_ok
+            - expose_addr
+            - is_ready
             type: object
         required:
         - spec

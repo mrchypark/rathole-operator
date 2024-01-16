@@ -1,0 +1,14 @@
+apiVersion: rathole.mrchypark.github.io/v1alpha1
+kind: Server
+metadata:
+  name: simple
+  namespace: test
+spec:
+  bindAddr:
+    host: "localhost"
+    port: 4444
+  exposeAddr: 
+    host: "test.com"
+    port: 889
+  transport:
+    type: "noise"
