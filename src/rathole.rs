@@ -1,3 +1,4 @@
+// TODO: tmp impl.maybe import rathole.
 use crate::Result;
 use base64::{
 	alphabet,
@@ -114,7 +115,6 @@ pub struct NoiseConfig {
 	pub pattern: String,
 	pub local_private_key: Option<String>,
 	pub remote_public_key: Option<String>,
-	// TODO: Maybe psk can be added
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]

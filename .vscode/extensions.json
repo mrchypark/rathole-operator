@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "Gruntfuggly.todo-tree",
+    "rust-lang.rust-analyzer",
+    "humao.rest-client",
+    "mhutchie.git-graph",
+    "Terrastruct.d2",
+    "ms-vscode.makefile-tools",
+    "redhat.vscode-yaml",
+    "mutantdino.resourcemonitor"
+  ]
+}

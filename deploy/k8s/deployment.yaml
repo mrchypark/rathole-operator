@@ -19,7 +19,7 @@ spec:
       serviceAccountName: rathole-operator-sa
       containers:
       - name: rathole-operator
-        image: ghcr.io/mrchypark/rathole-operator:main-cc408fb
+        image: ghcr.io/mrchypark/rathole-operator:main-0942ddb
         ports:
         - containerPort: 8080
         livenessProbe:
