@@ -139,7 +139,7 @@ async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
 							..Default::default()
 						}]),
 						ports: Some(vec![ContainerPort {
-							container_port: 80,
+							container_port: obj.spec().bind_addr.port,
 							..Default::default()
 						}]),
 						..Default::default()
