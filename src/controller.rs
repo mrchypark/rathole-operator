@@ -130,7 +130,7 @@ async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
 					}]),
 					containers: vec![Container {
 						name: "rathole-server".to_string(),
-						image: Some("rapiz1/rathole:0.5.0".to_string()),
+						image: Some("rapiz1/rathole:v0.5.0".to_string()),
 						args: Some(vec!["--server".to_string(), "/tmp/config.toml".to_string()]),
 						volume_mounts: Some(vec![VolumeMount {
 							read_only: Some(true),

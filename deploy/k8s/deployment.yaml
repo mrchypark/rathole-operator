@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rathole-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: rathole-operator
+      app.kubernetes.io/name: rathole-operator
+      app.kubernetes.io/instance: rathole-operator
+  template:
+    metadata:
+      labels:
+        name: rathole-operator
+        app.kubernetes.io/name: rathole-operator
+        app.kubernetes.io/instance: rathole-operator
+    spec:
+      serviceAccountName: rathole-operator-sa
+      containers:
+      - name: rathole-operator
+        image: ghcr.io/mrchypark/rathole-operator:main-cc408fb
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 3
