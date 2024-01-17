@@ -4,9 +4,15 @@ use base64::{
 	engine::{self, general_purpose},
 	Engine,
 };
+
+use kube::core::object::HasSpec;
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use url::Url;
+
+use crate::crd::Server;
+use std::sync::Arc;
 
 const DEFAULT_CURVE: KeypairType = KeypairType::X25519;
 
@@ -21,6 +27,46 @@ const DEFAULT_HEARTBEAT_TIMEOUT_SECS: u64 = 40;
 
 /// Client
 const DEFAULT_CLIENT_RETRY_INTERVAL_SECS: u64 = 1;
+
+impl Config {
+	pub fn runset(obj: Arc<Server>) -> Self {
+		return Config {
+			client: None,
+			server: Some(ServerConfig {
+				bind_addr: obj.spec().bind_addr.host.clone() + ":" + &obj.spec().bind_addr.port.to_string(),
+				default_token: None,
+				services: HashMap::from([(
+					"dummy".to_string(),
+					ServerServiceConfig {
+						bind_addr: "0.0.0.0:80".to_string(),
+						token: Some("nouse".to_string()),
+						..Default::default()
+					},
+				)]),
+				transport: TransportConfig {
+					transport_type: TransportType::Noise,
+					noise: Some(NoiseConfig {
+						pattern: String::from("Noise_NK_25519_ChaChaPoly_BLAKE2s"),
+						..Default::default()
+					}),
+					..Default::default()
+				},
+				heartbeat_interval: obj.spec().heartbeat_interval as u64,
+				..Default::default()
+			}),
+		};
+	}
+	pub fn into_bytes(&self) -> Vec<u8> {
+		return toml::to_string(&self).unwrap().into_bytes();
+	}
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct Config {
+	pub server: Option<ServerConfig>,
+	pub client: Option<ClientConfig>,
+}
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, PartialEq, Eq, Default)]
 pub enum TransportType {
@@ -215,13 +261,6 @@ fn dummy_service() -> HashMap<String, ServerServiceConfig> {
 			..Default::default()
 		},
 	)]);
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-#[serde(deny_unknown_fields)]
-pub struct Config {
-	pub server: Option<ServerConfig>,
-	pub client: Option<ClientConfig>,
 }
 
 #[derive(Clone, Debug, Copy)]
