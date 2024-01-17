@@ -105,14 +105,8 @@ pub struct ServerSpec {
 
 #[derive(Serialize, Deserialize, Debug, Default, PartialEq, Clone, JsonSchema)]
 pub struct Uri {
-	#[serde(default = "schema_default")]
-	pub schema: String,
 	pub host: String,
 	pub port: i32,
-}
-
-fn schema_default() -> String {
-	"http".into()
 }
 
 fn heartbeat_interval_default() -> i32 {

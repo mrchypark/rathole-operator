@@ -114,7 +114,6 @@ pub struct NoiseConfig {
 	pub pattern: String,
 	pub local_private_key: Option<String>,
 	pub remote_public_key: Option<String>,
-	// TODO: Maybe psk can be added
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -201,11 +200,21 @@ fn default_heartbeat_interval() -> u64 {
 pub struct ServerConfig {
 	pub bind_addr: String,
 	pub default_token: Option<String>,
+	#[serde(default = "dummy_service")]
 	pub services: HashMap<String, ServerServiceConfig>,
 	#[serde(default)]
 	pub transport: TransportConfig,
 	#[serde(default = "default_heartbeat_interval")]
 	pub heartbeat_interval: u64,
+}
+
+fn dummy_service() -> HashMap<String, ServerServiceConfig> {
+	return HashMap::from([(
+		"dummy".to_string(),
+		ServerServiceConfig {
+			..Default::default()
+		},
+	)]);
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]

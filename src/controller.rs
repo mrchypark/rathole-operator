@@ -1,5 +1,7 @@
 use crate::{
-	rathole::{Config, NoiseConfig, ServerConfig, TransportConfig, TransportType},
+	rathole::{
+		Config, NoiseConfig, ServerConfig, ServerServiceConfig, TransportConfig, TransportType,
+	},
 	Error, Result,
 };
 
@@ -24,7 +26,10 @@ use k8s_openapi::{
 };
 
 use futures::StreamExt;
-use std::{collections::BTreeMap, sync::Arc};
+use std::{
+	collections::{BTreeMap, HashMap},
+	sync::Arc,
+};
 use tokio::time::Duration;
 
 use crate::config::initialize_config;
@@ -44,13 +49,19 @@ async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
 	let c = Config {
 		client: None,
 		server: Some(ServerConfig {
-			bind_addr: obj.spec().bind_addr.schema.clone()
-				+ "://" + &obj.spec().bind_addr.host
-				+ ":" + &obj.spec().bind_addr.port.to_string(),
-			default_token: None,
+			bind_addr: obj.spec().bind_addr.host.clone() + ":" + &obj.spec().bind_addr.port.to_string(),
+			default_token: Some("nouse".to_string()),
+			services: HashMap::from([(
+				"dummy".to_string(),
+				ServerServiceConfig {
+					bind_addr: "0.0.0.0:80".to_string(),
+					..Default::default()
+				},
+			)]),
 			transport: TransportConfig {
 				transport_type: TransportType::Noise,
 				noise: Some(NoiseConfig {
+					pattern: String::from("Noise_NK_25519_ChaChaPoly_BLAKE2s"),
 					..Default::default()
 				}),
 				..Default::default()
@@ -62,12 +73,7 @@ async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
 
 	let t = toml::to_string(&c).unwrap();
 
-	let oref1 = obj.controller_owner_ref(&()).unwrap();
-	let oref2 = obj.controller_owner_ref(&()).unwrap();
-	// let oref3 = obj.controller_owner_ref(&()).unwrap();
-
-	let mut config = BTreeMap::new();
-	config.insert("config.toml".to_string(), ByteString(t.into_bytes()));
+	let oref = obj.controller_owner_ref(&()).unwrap();
 
 	let scr = Secret {
 		metadata: ObjectMeta {
@@ -75,10 +81,13 @@ async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
 				s.push_str("-server-config");
 				s
 			}),
-			owner_references: Some(vec![oref1]),
+			owner_references: Some(vec![oref.clone()]),
 			..ObjectMeta::default()
 		},
-		data: Some(config),
+		data: Some(BTreeMap::from([(
+			env.rathole_config_name.clone(),
+			ByteString(t.into_bytes()),
+		)])),
 		..Default::default()
 	};
 
@@ -95,13 +104,13 @@ async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
 	let dp = Deployment {
 		metadata: ObjectMeta {
 			name: Some(dp_name.clone()),
-			owner_references: Some(vec![oref2]),
+			owner_references: Some(vec![oref.clone()]),
 			..ObjectMeta::default()
 		},
 		spec: Some(DeploymentSpec {
 			replicas: Some(1),
 			selector: LabelSelector {
-				match_labels: Some(std::collections::BTreeMap::from([
+				match_labels: Some(BTreeMap::from([
 					("name".to_string(), dp_name.clone()),
 					("app.kubernetes.io/instance".to_string(), dp_name.clone()),
 					("app.kubernetes.io/name".to_string(), dp_name.clone()),
@@ -110,7 +119,7 @@ async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
 			},
 			template: PodTemplateSpec {
 				metadata: Some(ObjectMeta {
-					labels: Some(std::collections::BTreeMap::from([
+					labels: Some(BTreeMap::from([
 						("name".to_string(), dp_name.clone()),
 						("app.kubernetes.io/instance".to_string(), dp_name.clone()),
 						("app.kubernetes.io/name".to_string(), dp_name.clone()),
@@ -135,11 +144,15 @@ async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
 						image: Some(env.rathole_image.clone()),
 						args: Some(vec![
 							"--server".to_string(),
-							env.rathole_config_path.clone(),
+							format!(
+								"{}/{}",
+								env.rathole_config_path.clone(),
+								env.rathole_config_name.clone()
+							),
 						]),
 						volume_mounts: Some(vec![VolumeMount {
 							read_only: Some(true),
-							mount_path: "/tmp".to_string(),
+							mount_path: env.rathole_config_path.clone(),
 							name: "rathole-config".to_string(),
 							..Default::default()
 						}]),

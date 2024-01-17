@@ -56,9 +56,6 @@ spec:
                         port:
                           format: int32
                           type: integer
-                        schema:
-                          default: http
-                          type: string
                       required:
                       - host
                       - port
@@ -161,9 +158,6 @@ spec:
                   port:
                     format: int32
                     type: integer
-                  schema:
-                    default: http
-                    type: string
                 required:
                 - host
                 - port
@@ -178,9 +172,6 @@ spec:
                   port:
                     format: int32
                     type: integer
-                  schema:
-                    default: http
-                    type: string
                 required:
                 - host
                 - port
