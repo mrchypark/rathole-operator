@@ -10,7 +10,7 @@ set-example:
 	kubectl apply -f deploy/crd/example/simple/ns.yaml && kubectl apply -f deploy/crd/example/simple/.
 
 del-example:
-	kubectl delete -f deploy/crd/example/simple/client.yaml -f deploy/crd/example/simple/server.yaml
+	kubectl delete -f deploy/crd/example/simple/.
 
 run: apply-crd
 	cargo run

@@ -41,10 +41,7 @@ async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
 
 	let scr = Secret {
 		metadata: ObjectMeta {
-			name: obj.metadata.name.clone().map(|mut s| {
-				s.push_str("-server-config");
-				s
-			}),
+			name: obj.metadata.name.clone(),
 			owner_references: Some(vec![oref.clone()]),
 			..ObjectMeta::default()
 		},
@@ -55,19 +52,9 @@ async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
 		..Default::default()
 	};
 
-	let dp_name = obj
-		.metadata
-		.name
-		.clone()
-		.map(|mut s| {
-			s.push_str("-deployment");
-			s
-		})
-		.unwrap();
-
 	let dp = Deployment {
 		metadata: ObjectMeta {
-			name: Some(dp_name.clone()),
+			name: obj.metadata.name.clone(),
 			owner_references: Some(vec![oref.clone()]),
 			..ObjectMeta::default()
 		},
@@ -75,18 +62,30 @@ async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
 			replicas: Some(1),
 			selector: LabelSelector {
 				match_labels: Some(BTreeMap::from([
-					("name".to_string(), dp_name.clone()),
-					("app.kubernetes.io/instance".to_string(), dp_name.clone()),
-					("app.kubernetes.io/name".to_string(), dp_name.clone()),
+					("name".to_string(), obj.metadata.name.clone().unwrap()),
+					(
+						"app.kubernetes.io/instance".to_string(),
+						obj.metadata.name.clone().unwrap(),
+					),
+					(
+						"app.kubernetes.io/name".to_string(),
+						obj.metadata.name.clone().unwrap(),
+					),
 				])),
 				..Default::default()
 			},
 			template: PodTemplateSpec {
 				metadata: Some(ObjectMeta {
 					labels: Some(BTreeMap::from([
-						("name".to_string(), dp_name.clone()),
-						("app.kubernetes.io/instance".to_string(), dp_name.clone()),
-						("app.kubernetes.io/name".to_string(), dp_name.clone()),
+						("name".to_string(), obj.metadata.name.clone().unwrap()),
+						(
+							"app.kubernetes.io/instance".to_string(),
+							obj.metadata.name.clone().unwrap(),
+						),
+						(
+							"app.kubernetes.io/name".to_string(),
+							obj.metadata.name.clone().unwrap(),
+						),
 					])),
 					..Default::default()
 				}),
@@ -189,7 +188,22 @@ fn srv_error_policy(obj: Arc<RH_Server>, err: &Error, _ctx: Arc<Data>) -> Action
 
 async fn cli_reconcile(obj: Arc<RH_Client>, ctx: Arc<Data>) -> Result<Action> {
 	let client = &ctx.client;
+	let env = initialize_config();
 	let oref = obj.controller_owner_ref(&()).unwrap();
+
+	let dp_api = Api::<Deployment>::namespaced(
+		client.clone(),
+		obj
+			.metadata
+			.namespace
+			.as_ref()
+			.ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?,
+	);
+
+	dp_api
+		.get(&obj.spec.server_ref)
+		.await
+		.map_err(Error::NoTargetServer)?;
 
 	let scr = Secret {
 		metadata: ObjectMeta {
@@ -215,6 +229,7 @@ async fn cli_reconcile(obj: Arc<RH_Client>, ctx: Arc<Data>) -> Result<Action> {
 	);
 
 	scr_api
+		.clone()
 		.patch(
 			scr
 				.metadata
@@ -225,7 +240,40 @@ async fn cli_reconcile(obj: Arc<RH_Client>, ctx: Arc<Data>) -> Result<Action> {
 			&Patch::Apply(&scr),
 		)
 		.await
-		.map_err(Error::ConfigMapCreationFailed)?;
+		.map_err(Error::SecretCreationFailed)?;
+
+	let s = scr_api
+		.get(&obj.spec.server_ref)
+		.await
+		.map_err(Error::NoServerConfigFound)?;
+
+	let dat: BTreeMap<String, ByteString> = s.data.clone().unwrap();
+
+	let mut ref_config =
+		toml::from_str::<Config>(&String::from_utf8(dat[&env.rathole_config_name].0.clone()).unwrap())
+			.unwrap();
+
+	ref_config.add_services(obj.spec.services.clone());
+
+	let ns = Secret {
+		data: Some(BTreeMap::from([(
+			env.rathole_config_name.clone(),
+			ByteString(ref_config.into_bytes()),
+		)])),
+		..Default::default()
+	};
+
+	scr_api
+		.patch(
+			s.metadata
+				.name
+				.as_ref()
+				.ok_or_else(|| Error::MissingObjectKey(".metadata.name"))?,
+			&PatchParams::apply("server.rathole.mrchypark.github.io"),
+			&Patch::Apply(&ns),
+		)
+		.await
+		.map_err(Error::SecretCreationFailed)?;
 
 	Ok(Action::requeue(Duration::from_secs(10)))
 }

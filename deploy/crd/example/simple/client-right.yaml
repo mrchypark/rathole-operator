@@ -1,12 +1,12 @@
 apiVersion: rathole.mrchypark.github.io/v1alpha1
 kind: Client
 metadata:
-  name: simple
+  name: simple-right
   namespace: test
 spec:
-  serverRef: "simple"
+  serverRef: "simple-deployment"
   configTo:
-    name: "simplessh"
+    name: "simplesshttt"
     namespace: "test"
   services:
   - name: "rathole-ssh"

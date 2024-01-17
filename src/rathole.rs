@@ -11,7 +11,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use url::Url;
 
-use crate::crd::Server;
+use crate::crd::{Server, ServiceConfig};
+
 use std::sync::Arc;
 
 const DEFAULT_CURVE: KeypairType = KeypairType::X25519;
@@ -58,6 +59,20 @@ impl Config {
 	}
 	pub fn into_bytes(&self) -> Vec<u8> {
 		return toml::to_string(&self).unwrap().into_bytes();
+	}
+	pub fn add_services(&mut self, dat: Vec<ServiceConfig>) {
+		for d in &dat {
+			self.server.as_mut().unwrap().services.insert(
+				d.name.clone(),
+				ServerServiceConfig {
+					service_type: ServiceType::Tcp,
+					name: d.name.clone(),
+					bind_addr: format!("{}:{}", d.local_addr.host, d.local_addr.port),
+					token: d.token.key.clone(),
+					nodelay: Some(d.nodelay),
+				},
+			);
+		}
 	}
 }
 
