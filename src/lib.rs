@@ -40,8 +40,8 @@ impl Error {
 pub mod controller;
 pub use crate::controller::*;
 
-/// Log and trace integrations
-pub mod telemetry;
-
+pub mod config;
 pub mod crd;
 pub mod rathole;
+/// Log and trace integrations
+pub mod telemetry;

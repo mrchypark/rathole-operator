@@ -27,6 +27,7 @@ use futures::StreamExt;
 use std::{collections::BTreeMap, sync::Arc};
 use tokio::time::Duration;
 
+use crate::config::initialize_config;
 use crate::crd::{Client as RH_Client, Server as RH_Server};
 
 // Data we want access to in error/reconcile calls
@@ -36,6 +37,7 @@ struct Data {
 
 async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
 	let client = &ctx.client;
+	let env = initialize_config();
 
 	println!("server request start: {}", obj.name_any());
 
@@ -130,8 +132,11 @@ async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
 					}]),
 					containers: vec![Container {
 						name: "rathole-server".to_string(),
-						image: Some("rapiz1/rathole:v0.5.0".to_string()),
-						args: Some(vec!["--server".to_string(), "/tmp/config.toml".to_string()]),
+						image: Some(env.rathole_image.clone()),
+						args: Some(vec![
+							"--server".to_string(),
+							env.rathole_config_path.clone(),
+						]),
 						volume_mounts: Some(vec![VolumeMount {
 							read_only: Some(true),
 							mount_path: "/tmp".to_string(),

@@ -9,4 +9,7 @@
     "editor.defaultFormatter": "redhat.vscode-yaml",
     "editor.autoIndent": "advanced"
   },
+  "rust-analyzer.linkedProjects": [
+    "./Cargo.toml"
+  ],
 }

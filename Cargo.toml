@@ -11,7 +11,7 @@ default-run = "rathole-operator"
 anyhow = { version = "1.0.79" }
 thiserror = { version = "1.0.56" }
 futures = { version = "0.3.30" }
-tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.35.1", features = ["macros", "rt-multi-thread", "sync"] }
 chrono = { version = "0.4.31", features = ["serde"] }
 
 kube = { version = "0.87.2", features = ["runtime", "derive", "client"] }
@@ -24,6 +24,7 @@ serde = { version = "1.0.195" }
 serde_json = { version = "1.0.111" }
 serde_yaml = { version = "0.9.30" }
 toml = { version = "0.8.8" }
+lazy_static = { version = "1.4.0" }
 
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.18", features = ["json", "env-filter"] }
