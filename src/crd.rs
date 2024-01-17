@@ -17,7 +17,7 @@ pub struct ClientSpec {
 	#[serde(rename(deserialize = "serverRef"))]
 	pub server_ref: String,
 	#[serde(rename(deserialize = "configTo"))]
-	pub config_to: ClientConfig,
+	pub config_to: ConfigTo,
 	/// Timeout for the heartbeat signal in seconds.
 	#[serde(default = "heartbeat_timeout_default")]
 	#[serde(rename(deserialize = "heartbeatTimeout"))]
@@ -29,7 +29,7 @@ pub struct ClientSpec {
 }
 
 #[derive(Serialize, Deserialize, Default, Debug, PartialEq, Clone, JsonSchema)]
-pub struct ClientConfig {
+pub struct ConfigTo {
 	#[serde(default = "client_config_type_defualt")]
 	pub r#type: ClientConfigType,
 	#[serde(skip_serializing_if = "Option::is_none")]
@@ -105,14 +105,8 @@ pub struct ServerSpec {
 
 #[derive(Serialize, Deserialize, Debug, Default, PartialEq, Clone, JsonSchema)]
 pub struct Uri {
-	#[serde(default = "schema_default")]
-	pub schema: String,
 	pub host: String,
 	pub port: i32,
-}
-
-fn schema_default() -> String {
-	"http".into()
 }
 
 fn heartbeat_interval_default() -> i32 {

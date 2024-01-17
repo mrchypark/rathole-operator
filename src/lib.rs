@@ -19,8 +19,17 @@ pub enum Error {
 	#[error("Failed to create ConfigMap: {0}")]
 	ConfigMapCreationFailed(#[source] kube::Error),
 
+	#[error("Failed to create Secret: {0}")]
+	SecretCreationFailed(#[source] kube::Error),
+
 	#[error("Failed to create Deplyment: {0}")]
 	DeplymentCreationFailed(#[source] kube::Error),
+
+	#[error("Failed to find server config: {0}")]
+	NoServerConfigFound(#[source] kube::Error),
+
+	#[error("Failed to get rathole server for use: {0}")]
+	NoTargetServer(#[source] kube::Error),
 
 	#[error("MissingObjectKey: {0}")]
 	MissingObjectKey(&'static str),
@@ -40,8 +49,8 @@ impl Error {
 pub mod controller;
 pub use crate::controller::*;
 
-/// Log and trace integrations
-pub mod telemetry;
-
+pub mod config;
 pub mod crd;
 pub mod rathole;
+/// Log and trace integrations
+pub mod telemetry;
