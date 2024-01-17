@@ -5,8 +5,6 @@ version = "0.0.3"
 edition = "2021"
 default-run = "rathole-operator"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [profile.dev]
 overflow-checks = false
 opt-level = 0

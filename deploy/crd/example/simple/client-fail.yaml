@@ -1,12 +1,13 @@
 apiVersion: rathole.mrchypark.github.io/v1alpha1
 kind: Client
 metadata:
-  name: simple
+  name: simple-fail
   namespace: test
 spec:
-  serverRef: "simple"
+  # no exist deployment
+  serverRef: "simple-deployment"
   configTo:
-    name: "simple-ssh"
+    name: "simplesshttt"
     namespace: "test"
   services:
     - name: "rathole-ssh"
@@ -15,5 +16,5 @@ spec:
         port: 22
       token:
         secretRef:
-          name: "mysecret"
-          key: "token"
+          name: "secret-name"
+          key: "secret-key"

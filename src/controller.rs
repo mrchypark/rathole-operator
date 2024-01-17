@@ -205,7 +205,16 @@ async fn cli_reconcile(obj: Arc<RH_Client>, ctx: Arc<Data>) -> Result<Action> {
 		.await
 		.map_err(Error::NoTargetServer)?;
 
-	let scr = Secret {
+	let scr_api = Api::<Secret>::namespaced(
+		client.clone(),
+		obj
+			.metadata
+			.namespace
+			.as_ref()
+			.ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?,
+	);
+
+	let client_config = Secret {
 		metadata: ObjectMeta {
 			name: obj.spec.config_to.name.clone(),
 			namespace: obj.spec.config_to.namespace.clone(),
@@ -218,26 +227,16 @@ async fn cli_reconcile(obj: Arc<RH_Client>, ctx: Arc<Data>) -> Result<Action> {
 		)])),
 		..Default::default()
 	};
-
-	let scr_api = Api::<Secret>::namespaced(
-		client.clone(),
-		obj
-			.metadata
-			.namespace
-			.as_ref()
-			.ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?,
-	);
-
 	scr_api
 		.clone()
 		.patch(
-			scr
+			client_config
 				.metadata
 				.name
 				.as_ref()
 				.ok_or_else(|| Error::MissingObjectKey(".metadata.name"))?,
 			&PatchParams::apply("server.rathole.mrchypark.github.io"),
-			&Patch::Apply(&scr),
+			&Patch::Apply(&client_config),
 		)
 		.await
 		.map_err(Error::SecretCreationFailed)?;
