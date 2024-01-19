@@ -31,6 +31,12 @@ pub enum Error {
 	#[error("Failed to get rathole server for use: {0}")]
 	NoTargetServer(#[source] kube::Error),
 
+	#[error("Failed to get server config: {0}")]
+	NoTargetServerConfig(#[source] kube::Error),
+
+	#[error("Failed to get Service Token Secret: {0}")]
+	NoTargetToken(#[source] kube::Error),
+
 	#[error("MissingObjectKey: {0}")]
 	MissingObjectKey(&'static str),
 
@@ -51,6 +57,7 @@ pub use crate::controller::*;
 
 pub mod config;
 pub mod crd;
+pub mod method;
 pub mod rathole;
 /// Log and trace integrations
 pub mod telemetry;

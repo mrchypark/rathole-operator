@@ -74,7 +74,9 @@ fn retry_interval_default() -> i32 {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
 pub struct ClientStatus {
-	pub is_ok: bool,
+	pub server_ref: String,
+	pub server_config_ok: bool,
+	pub server_deploy_ok: bool,
 }
 
 #[derive(CustomResource, Serialize, Deserialize, Default, Debug, PartialEq, Clone, JsonSchema)]
@@ -89,6 +91,7 @@ pub struct ClientStatus {
 	status = "ServerStatus",
 	namespaced
 )]
+
 pub struct ServerSpec {
 	#[serde(rename(deserialize = "bindAddr"))]
 	pub bind_addr: Uri,
