@@ -8,7 +8,10 @@ use kube::{
 	api::{Api, ObjectMeta, Patch, PatchParams},
 	client::Client,
 	core::object::HasSpec,
-	runtime::controller::{Action, Controller},
+	runtime::{
+		controller::{Action, Controller},
+		watcher::Event,
+	},
 	Resource, ResourceExt,
 };
 
@@ -100,7 +103,7 @@ async fn cli_reconcile(obj: Arc<RH_Client>, ctx: Arc<Data>) -> Result<Action> {
 		.await
 		.map_err(Error::NoTargetServer)?;
 
-	// update secretref to object
+	// get secretref to object
 	let mut cc: HashMap<String, ClientServiceConfig> = HashMap::new();
 	for s in &obj.spec.services {
 		match s.token.r#type {
@@ -145,7 +148,9 @@ async fn cli_reconcile(obj: Arc<RH_Client>, ctx: Arc<Data>) -> Result<Action> {
 		toml::from_str::<Config>(&String::from_utf8(dat[&env.rathole_config_name].0.clone()).unwrap())
 			.unwrap();
 
-	ref_config.add_services(obj.spec.services.clone());
+	for s in cc.values() {
+		ref_config.add_service(s.clone());
+	}
 
 	let ns = Secret {
 		data: Some(BTreeMap::from([(
@@ -211,7 +216,27 @@ pub async fn run() {
 				client: client.clone(),
 			}),
 		)
-		.for_each(|_| futures::future::ready(()));
+		.for_each(|event| match event {
+			Event::Applied(o) => {},
+			Event::Deleted(o) => {},
+			Event::Restarted(o) => {},
+			
+
+    /// An object was added or modified
+    //Applied(K),
+    /// An object was deleted
+    ///
+    /// NOTE: This should not be used for managing persistent state elsewhere, since
+    /// events may be lost if the watcher is unavailable. Use Finalizers instead.
+    // Deleted(K),
+    /// The watch stream was restarted, so `Deleted` events may have been missed
+    ///
+    /// Should be used as a signal to replace the store contents atomically.
+    ///
+    /// Any objects that were previously [`Applied`](Event::Applied) but are not listed in this event
+    /// should be assumed to have been [`Deleted`](Event::Deleted).
+    // Restarted(Vec<K>),
+		});
 
 	let cli_con = Controller::new(cli, Default::default())
 		.owns(dp, Default::default())

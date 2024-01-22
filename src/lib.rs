@@ -54,13 +54,10 @@ impl Error {
 	}
 }
 
-/// Expose all controller components used by main
-pub mod controller;
-pub use crate::controller::*;
-
 pub mod config;
+pub mod controller;
 pub mod crd;
 pub mod method;
 pub mod rathole;
-/// Log and trace integrations
 pub mod telemetry;
+pub mod watcher;

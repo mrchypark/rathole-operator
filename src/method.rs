@@ -70,19 +70,17 @@ impl Config {
 			}),
 		};
 	}
-	pub fn add_services(&mut self, dat: Vec<ServiceConfig>) {
-		for d in &dat {
-			self.server.as_mut().unwrap().services.insert(
-				d.name.clone(),
-				ServerServiceConfig {
-					service_type: ServiceType::Tcp,
-					name: d.name.clone(),
-					bind_addr: format!("{}:{}", d.local_addr.host, d.local_addr.port),
-					token: d.token.key.clone(),
-					nodelay: Some(d.nodelay),
-				},
-			);
-		}
+	pub fn add_service(&mut self, dat: ClientServiceConfig) {
+		self.server.as_mut().unwrap().services.insert(
+			dat.name.clone(),
+			ServerServiceConfig {
+				service_type: ServiceType::Tcp,
+				name: dat.name.clone(),
+				bind_addr: dat.local_addr,
+				token: dat.token,
+				nodelay: dat.nodelay,
+			},
+		);
 	}
 }
 
