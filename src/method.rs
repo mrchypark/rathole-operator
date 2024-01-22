@@ -1,6 +1,6 @@
 use crate::{
 	config::initialize_config,
-	crd::{Client, Server, ServiceConfig},
+	crd::{Client, Server, ServiceConfig, ServiceType as RH_ServiceType},
 	rathole::*,
 };
 
@@ -9,12 +9,7 @@ use std::{
 	sync::Arc,
 };
 
-use kube::{
-	api::{Api, ObjectMeta, Patch, PatchParams},
-	core::object::HasSpec,
-	runtime::controller::{Action, Controller},
-	Resource, ResourceExt,
-};
+use kube::{api::ObjectMeta, core::object::HasSpec, Resource};
 
 use k8s_openapi::{
 	api::{
@@ -27,6 +22,22 @@ use k8s_openapi::{
 	apimachinery::pkg::apis::meta::v1::LabelSelector,
 	ByteString,
 };
+
+impl ServiceConfig {
+	pub fn to_config(&self, token: String) -> ClientServiceConfig {
+		return ClientServiceConfig {
+			service_type: match self.r#type {
+				Some(RH_ServiceType::Tcp) | None => ServiceType::Tcp,
+				Some(RH_ServiceType::Udp) => ServiceType::Udp,
+			},
+			name: self.name.clone(),
+			local_addr: format!("{}:{}", self.local_addr.host, self.local_addr.port),
+			nodelay: Some(self.nodelay),
+			retry_interval: Some(self.retry_interval as u64),
+			token: Some(token),
+		};
+	}
+}
 
 impl Config {
 	pub fn into_bytes(&self) -> Vec<u8> {

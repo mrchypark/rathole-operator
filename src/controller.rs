@@ -1,6 +1,6 @@
 use crate::{
 	crd::SecretType,
-	rathole::{ClientConfig, ClientServiceConfig, Config},
+	rathole::{ClientServiceConfig, Config, ServiceType},
 	Error, Result,
 };
 
@@ -90,17 +90,6 @@ async fn cli_reconcile(obj: Arc<RH_Client>, ctx: Arc<Data>) -> Result<Action> {
 	let dp_api = Api::<Deployment>::namespaced(client.clone(), ns);
 	let scr_api = Api::<Secret>::namespaced(client.clone(), ns);
 
-	// server ref check
-	// crd, deploy, sercret check
-	// client status update
-
-	// get server secret
-
-	// update server secret
-	// patch server secret
-
-	// client.to_config_sercret
-
 	svr_api
 		.get(&obj.spec.server_ref)
 		.await
@@ -111,35 +100,39 @@ async fn cli_reconcile(obj: Arc<RH_Client>, ctx: Arc<Data>) -> Result<Action> {
 		.await
 		.map_err(Error::NoTargetServer)?;
 
+	// update secretref to object
 	let mut cc: HashMap<String, ClientServiceConfig> = HashMap::new();
-
 	for s in &obj.spec.services {
 		match s.token.r#type {
-			Some(SecretType::Reference) | None => match &s.token.secret_ref {
-				Some(SecretRef) => {
-					let t = scr_api
-						.get(&s.token.secret_ref.unwrap().name)
-						.await
-						.map_err(Error::NoTargetToken)?;
-					let dat: BTreeMap<String, ByteString> = t.data.clone().unwrap();
+			Some(SecretType::Reference) | None => {
+				match &s.token.secret_ref {
+					Some(secret_ref) => {
+						let secret = scr_api
+							.get(&secret_ref.name)
+							.await
+							.map_err(Error::NoTargetToken)?;
 
-					cc. = Some(String::from_utf8(dat[&env.rathole_config_name].0.clone()).unwrap());
-				},
-				None => {
-					s.token
-						.secret_ref
-						.ok_or(std::io::Error::new(
+						if let Some(data) = secret.data {
+							if let Some(value) = data.get(&secret_ref.key) {
+								let config_str = String::from_utf8(value.0.clone()).unwrap();
+								cc.insert(s.name.clone(), s.to_config(config_str));
+							}
+						}
+					},
+					None => {
+						// 여기에 Reference 타입이지만 secret_ref가 없는 경우의 처리를 추가합니다.
+						return Err(Error::DefaultError(std::io::Error::new(
 							ErrorKind::NotFound,
-							"Secret type is set Reference, but no data on SecretRef.",
-						))
-						.map_err(|e| Error::DefaultError(e));
-				},
+							"Secret type is set to Reference, but no data on SecretRef.",
+						)));
+					},
+				}
 			},
-			Some(SecretType::Direct) => {},
+			Some(SecretType::Direct) => {
+				cc.insert(s.name.clone(), s.to_config(s.token.key.clone().unwrap()));
+			},
 		}
 	}
-
-	println!("{:#?}", obj.spec.services);
 
 	let s = scr_api
 		.get(&obj.spec.server_ref)

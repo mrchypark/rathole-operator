@@ -94,10 +94,8 @@ spec:
                       type: object
                     type:
                       enum:
-                      - noise
                       - tcp
-                      - tls
-                      - websocket
+                      - udp
                       nullable: true
                       type: string
                   required:
@@ -114,10 +112,16 @@ spec:
           status:
             nullable: true
             properties:
-              is_ok:
+              server_config_ok:
                 type: boolean
+              server_deploy_ok:
+                type: boolean
+              server_ref:
+                type: string
             required:
-            - is_ok
+            - server_config_ok
+            - server_deploy_ok
+            - server_ref
             type: object
         required:
         - spec

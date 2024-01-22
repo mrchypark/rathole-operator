@@ -37,6 +37,9 @@ pub enum Error {
 	#[error("Failed to get Service Token Secret: {0}")]
 	NoTargetToken(#[source] kube::Error),
 
+	#[error("fail: {0}")]
+	InvalidUtf8Data(#[source] std::string::FromUtf8Error),
+
 	#[error("MissingObjectKey: {0}")]
 	MissingObjectKey(&'static str),
 
