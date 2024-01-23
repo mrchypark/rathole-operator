@@ -1,5 +1,5 @@
 use actix_web::{get, middleware, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use rathole_operator::{config::initialize_config, controller, telemetry};
+use rathole_operator::{config::initialize_config, controller, telemetry, watcher};
 use serde::Serialize;
 
 #[get("/health")]
@@ -24,6 +24,7 @@ async fn main() -> anyhow::Result<()> {
 	let env = initialize_config();
 
 	let controller = controller::run();
+	let _watcher = watcher::run();
 
 	// Start web server
 	let server = HttpServer::new(move || {
@@ -35,7 +36,6 @@ async fn main() -> anyhow::Result<()> {
 	.bind(format!("{}:{}", env.host, env.port))?
 	.shutdown_timeout(5);
 
-	// Both runtimes implements graceful shutdown, so poll until both are done
 	tokio::join!(controller, server.run()).1?;
 	Ok(())
 }

@@ -5,15 +5,9 @@ use base64::{
 	Engine,
 };
 
-use kube::core::object::HasSpec;
-
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use url::Url;
-
-use crate::crd::{Server, ServiceConfig};
-
-use std::sync::Arc;
 
 const DEFAULT_CURVE: KeypairType = KeypairType::X25519;
 
@@ -28,53 +22,6 @@ const DEFAULT_HEARTBEAT_TIMEOUT_SECS: u64 = 40;
 
 /// Client
 const DEFAULT_CLIENT_RETRY_INTERVAL_SECS: u64 = 1;
-
-impl Config {
-	pub fn runset(obj: Arc<Server>) -> Self {
-		return Config {
-			client: None,
-			server: Some(ServerConfig {
-				bind_addr: obj.spec().bind_addr.host.clone() + ":" + &obj.spec().bind_addr.port.to_string(),
-				default_token: None,
-				services: HashMap::from([(
-					"dummy".to_string(),
-					ServerServiceConfig {
-						bind_addr: "0.0.0.0:80".to_string(),
-						token: Some("nouse".to_string()),
-						..Default::default()
-					},
-				)]),
-				transport: TransportConfig {
-					transport_type: TransportType::Noise,
-					noise: Some(NoiseConfig {
-						pattern: String::from("Noise_NK_25519_ChaChaPoly_BLAKE2s"),
-						..Default::default()
-					}),
-					..Default::default()
-				},
-				heartbeat_interval: obj.spec().heartbeat_interval as u64,
-				..Default::default()
-			}),
-		};
-	}
-	pub fn into_bytes(&self) -> Vec<u8> {
-		return toml::to_string(&self).unwrap().into_bytes();
-	}
-	pub fn add_services(&mut self, dat: Vec<ServiceConfig>) {
-		for d in &dat {
-			self.server.as_mut().unwrap().services.insert(
-				d.name.clone(),
-				ServerServiceConfig {
-					service_type: ServiceType::Tcp,
-					name: d.name.clone(),
-					bind_addr: format!("{}:{}", d.local_addr.host, d.local_addr.port),
-					token: d.token.key.clone(),
-					nodelay: Some(d.nodelay),
-				},
-			);
-		}
-	}
-}
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(deny_unknown_fields)]

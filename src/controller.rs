@@ -1,10 +1,17 @@
-use crate::{rathole::Config, Error, Result};
+use crate::{
+	crd::SecretType,
+	rathole::{ClientServiceConfig, Config, ServiceType},
+	Error, Result,
+};
 
 use kube::{
 	api::{Api, ObjectMeta, Patch, PatchParams},
 	client::Client,
 	core::object::HasSpec,
-	runtime::controller::{Action, Controller},
+	runtime::{
+		controller::{Action, Controller},
+		watcher::Event,
+	},
 	Resource, ResourceExt,
 };
 
@@ -21,7 +28,11 @@ use k8s_openapi::{
 };
 
 use futures::StreamExt;
-use std::{collections::BTreeMap, sync::Arc};
+use std::{
+	collections::{BTreeMap, HashMap},
+	io::ErrorKind,
+	sync::Arc,
+};
 use tokio::time::Duration;
 
 use crate::config::initialize_config;
@@ -33,149 +44,32 @@ struct Data {
 }
 
 async fn srv_reconcile(obj: Arc<RH_Server>, ctx: Arc<Data>) -> Result<Action> {
+	let scr = (*obj).to_config_secret();
+	let dp = (*obj).to_deployment();
+
 	let client = &ctx.client;
-	let env = initialize_config();
-	let c = Config::runset(obj.clone());
+	let ns = obj
+		.metadata
+		.namespace
+		.as_ref()
+		.ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?;
+	let name = obj
+		.metadata
+		.name
+		.as_ref()
+		.ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?;
+	let dp_api = Api::<Deployment>::namespaced(client.clone(), ns);
+	let scr_api = Api::<Secret>::namespaced(client.clone(), ns);
 
-	let oref = obj.controller_owner_ref(&()).unwrap();
-
-	let scr = Secret {
-		metadata: ObjectMeta {
-			name: obj.metadata.name.clone(),
-			owner_references: Some(vec![oref.clone()]),
-			..ObjectMeta::default()
-		},
-		data: Some(BTreeMap::from([(
-			env.rathole_config_name.clone(),
-			ByteString(c.into_bytes()),
-		)])),
-		..Default::default()
-	};
-
-	let dp = Deployment {
-		metadata: ObjectMeta {
-			name: obj.metadata.name.clone(),
-			owner_references: Some(vec![oref.clone()]),
-			..ObjectMeta::default()
-		},
-		spec: Some(DeploymentSpec {
-			replicas: Some(1),
-			selector: LabelSelector {
-				match_labels: Some(BTreeMap::from([
-					("name".to_string(), obj.metadata.name.clone().unwrap()),
-					(
-						"app.kubernetes.io/instance".to_string(),
-						obj.metadata.name.clone().unwrap(),
-					),
-					(
-						"app.kubernetes.io/name".to_string(),
-						obj.metadata.name.clone().unwrap(),
-					),
-				])),
-				..Default::default()
-			},
-			template: PodTemplateSpec {
-				metadata: Some(ObjectMeta {
-					labels: Some(BTreeMap::from([
-						("name".to_string(), obj.metadata.name.clone().unwrap()),
-						(
-							"app.kubernetes.io/instance".to_string(),
-							obj.metadata.name.clone().unwrap(),
-						),
-						(
-							"app.kubernetes.io/name".to_string(),
-							obj.metadata.name.clone().unwrap(),
-						),
-					])),
-					..Default::default()
-				}),
-				spec: Some(PodSpec {
-					volumes: Some(vec![Volume {
-						name: "rathole-config".to_string(),
-						secret: Some(SecretVolumeSource {
-							optional: Some(false),
-							secret_name: obj.metadata.name.clone().map(|mut s| {
-								s.push_str("-server-config");
-								s
-							}),
-							..Default::default()
-						}),
-						..Default::default()
-					}]),
-					containers: vec![Container {
-						name: "rathole-server".to_string(),
-						image: Some(env.rathole_image.clone()),
-						args: Some(vec![
-							"--server".to_string(),
-							format!(
-								"{}/{}",
-								env.rathole_config_path.clone(),
-								env.rathole_config_name.clone()
-							),
-						]),
-						volume_mounts: Some(vec![VolumeMount {
-							read_only: Some(true),
-							mount_path: env.rathole_config_path.clone(),
-							name: "rathole-config".to_string(),
-							..Default::default()
-						}]),
-						ports: Some(vec![ContainerPort {
-							container_port: obj.spec().bind_addr.port,
-							..Default::default()
-						}]),
-						..Default::default()
-					}],
-					..Default::default()
-				}),
-			},
-			strategy: Some(DeploymentStrategy::default()),
-			..Default::default()
-		}),
-		..Default::default()
-	};
-
-	let dp_api = Api::<Deployment>::namespaced(
-		client.clone(),
-		obj
-			.metadata
-			.namespace
-			.as_ref()
-			.ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?,
-	);
-
-	let scr_api = Api::<Secret>::namespaced(
-		client.clone(),
-		obj
-			.metadata
-			.namespace
-			.as_ref()
-			.ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?,
-	);
-
+	let pp = PatchParams::apply("server.rathole.mrchypark.github.io");
 	dp_api
-		.patch(
-			dp.metadata
-				.name
-				.as_ref()
-				.ok_or_else(|| Error::MissingObjectKey(".metadata.name"))?,
-			&PatchParams::apply("server.rathole.mrchypark.github.io"),
-			&Patch::Apply(&dp),
-		)
+		.patch(name, &pp, &Patch::Apply(&dp))
 		.await
-		.map_err(Error::ConfigMapCreationFailed)?;
-
+		.map_err(Error::DeplymentCreationFailed)?;
 	scr_api
-		.patch(
-			scr
-				.metadata
-				.name
-				.as_ref()
-				.ok_or_else(|| Error::MissingObjectKey(".metadata.name"))?,
-			&PatchParams::apply("server.rathole.mrchypark.github.io"),
-			&Patch::Apply(&scr),
-		)
+		.patch(name, &pp, &Patch::Apply(&scr))
 		.await
-		.map_err(Error::ConfigMapCreationFailed)?;
+		.map_err(Error::SecretCreationFailed)?;
 
 	Ok(Action::requeue(Duration::from_secs(10)))
 }
@@ -189,57 +83,59 @@ fn srv_error_policy(obj: Arc<RH_Server>, err: &Error, _ctx: Arc<Data>) -> Action
 async fn cli_reconcile(obj: Arc<RH_Client>, ctx: Arc<Data>) -> Result<Action> {
 	let client = &ctx.client;
 	let env = initialize_config();
-	let oref = obj.controller_owner_ref(&()).unwrap();
 
-	let dp_api = Api::<Deployment>::namespaced(
-		client.clone(),
-		obj
-			.metadata
-			.namespace
-			.as_ref()
-			.ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?,
-	);
+	let ns = obj
+		.metadata
+		.namespace
+		.as_ref()
+		.ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?;
+	let svr_api = Api::<RH_Server>::namespaced(client.clone(), ns);
+	let dp_api = Api::<Deployment>::namespaced(client.clone(), ns);
+	let scr_api = Api::<Secret>::namespaced(client.clone(), ns);
+
+	svr_api
+		.get(&obj.spec.server_ref)
+		.await
+		.map_err(Error::NoTargetServerConfig)?;
 
 	dp_api
 		.get(&obj.spec.server_ref)
 		.await
 		.map_err(Error::NoTargetServer)?;
 
-	let scr_api = Api::<Secret>::namespaced(
-		client.clone(),
-		obj
-			.metadata
-			.namespace
-			.as_ref()
-			.ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?,
-	);
+	// get secretref to object
+	let mut cc: HashMap<String, ClientServiceConfig> = HashMap::new();
+	for s in &obj.spec.services {
+		match s.token.r#type {
+			Some(SecretType::Reference) | None => {
+				match &s.token.secret_ref {
+					Some(secret_ref) => {
+						let secret = scr_api
+							.get(&secret_ref.name)
+							.await
+							.map_err(Error::NoTargetToken)?;
 
-	let client_config = Secret {
-		metadata: ObjectMeta {
-			name: obj.spec.config_to.name.clone(),
-			namespace: obj.spec.config_to.namespace.clone(),
-			owner_references: Some(vec![oref.clone()]),
-			..ObjectMeta::default()
-		},
-		data: Some(BTreeMap::from([(
-			String::from("config"),
-			ByteString("test".to_string().into_bytes()),
-		)])),
-		..Default::default()
-	};
-	scr_api
-		.clone()
-		.patch(
-			client_config
-				.metadata
-				.name
-				.as_ref()
-				.ok_or_else(|| Error::MissingObjectKey(".metadata.name"))?,
-			&PatchParams::apply("server.rathole.mrchypark.github.io"),
-			&Patch::Apply(&client_config),
-		)
-		.await
-		.map_err(Error::SecretCreationFailed)?;
+						if let Some(data) = secret.data {
+							if let Some(value) = data.get(&secret_ref.key) {
+								let config_str = String::from_utf8(value.0.clone()).unwrap();
+								cc.insert(s.name.clone(), s.to_config(config_str));
+							}
+						}
+					},
+					None => {
+						// 여기에 Reference 타입이지만 secret_ref가 없는 경우의 처리를 추가합니다.
+						return Err(Error::DefaultError(std::io::Error::new(
+							ErrorKind::NotFound,
+							"Secret type is set to Reference, but no data on SecretRef.",
+						)));
+					},
+				}
+			},
+			Some(SecretType::Direct) => {
+				cc.insert(s.name.clone(), s.to_config(s.token.key.clone().unwrap()));
+			},
+		}
+	}
 
 	let s = scr_api
 		.get(&obj.spec.server_ref)
@@ -252,7 +148,9 @@ async fn cli_reconcile(obj: Arc<RH_Client>, ctx: Arc<Data>) -> Result<Action> {
 		toml::from_str::<Config>(&String::from_utf8(dat[&env.rathole_config_name].0.clone()).unwrap())
 			.unwrap();
 
-	ref_config.add_services(obj.spec.services.clone());
+	for s in cc.values() {
+		ref_config.add_service(s.clone());
+	}
 
 	let ns = Secret {
 		data: Some(BTreeMap::from([(
@@ -273,6 +171,20 @@ async fn cli_reconcile(obj: Arc<RH_Client>, ctx: Arc<Data>) -> Result<Action> {
 		)
 		.await
 		.map_err(Error::SecretCreationFailed)?;
+
+	// let client_config = scr_api
+	// 	.clone()
+	// 	.patch(
+	// 		client_config
+	// 			.metadata
+	// 			.name
+	// 			.as_ref()
+	// 			.ok_or_else(|| Error::MissingObjectKey(".metadata.name"))?,
+	// 		&PatchParams::apply("server.rathole.mrchypark.github.io"),
+	// 		&Patch::Apply(&client_config),
+	// 	)
+	// 	.await
+	// 	.map_err(Error::SecretCreationFailed)?;
 
 	Ok(Action::requeue(Duration::from_secs(10)))
 }
@@ -304,7 +216,27 @@ pub async fn run() {
 				client: client.clone(),
 			}),
 		)
-		.for_each(|_| futures::future::ready(()));
+		.for_each(|event| match event {
+			Event::Applied(o) => {},
+			Event::Deleted(o) => {},
+			Event::Restarted(o) => {},
+			
+
+    /// An object was added or modified
+    //Applied(K),
+    /// An object was deleted
+    ///
+    /// NOTE: This should not be used for managing persistent state elsewhere, since
+    /// events may be lost if the watcher is unavailable. Use Finalizers instead.
+    // Deleted(K),
+    /// The watch stream was restarted, so `Deleted` events may have been missed
+    ///
+    /// Should be used as a signal to replace the store contents atomically.
+    ///
+    /// Any objects that were previously [`Applied`](Event::Applied) but are not listed in this event
+    /// should be assumed to have been [`Deleted`](Event::Deleted).
+    // Restarted(Vec<K>),
+		});
 
 	let cli_con = Controller::new(cli, Default::default())
 		.owns(dp, Default::default())

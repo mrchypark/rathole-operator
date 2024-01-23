@@ -55,13 +55,22 @@ pub struct ServiceConfig {
 	#[serde(rename(deserialize = "localAddr"))]
 	pub local_addr: Uri,
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub r#type: Option<TransportType>,
+	pub r#type: Option<ServiceType>,
 	#[serde(default = "nodelay_default")]
 	pub nodelay: bool,
 	#[serde(default = "retry_interval_default")]
 	#[serde(rename(deserialize = "retryInterval"))]
 	pub retry_interval: i32,
 	pub token: Token,
+}
+
+#[derive(Serialize, Deserialize, Default, Debug, PartialEq, Clone, JsonSchema)]
+pub enum ServiceType {
+	#[serde(rename = "tcp")]
+	#[default]
+	Tcp,
+	#[serde(rename = "udp")]
+	Udp,
 }
 
 fn nodelay_default() -> bool {
@@ -74,7 +83,9 @@ fn retry_interval_default() -> i32 {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
 pub struct ClientStatus {
-	pub is_ok: bool,
+	pub server_ref: String,
+	pub server_config_ok: bool,
+	pub server_deploy_ok: bool,
 }
 
 #[derive(CustomResource, Serialize, Deserialize, Default, Debug, PartialEq, Clone, JsonSchema)]
@@ -89,6 +100,7 @@ pub struct ClientStatus {
 	status = "ServerStatus",
 	namespaced
 )]
+
 pub struct ServerSpec {
 	#[serde(rename(deserialize = "bindAddr"))]
 	pub bind_addr: Uri,
