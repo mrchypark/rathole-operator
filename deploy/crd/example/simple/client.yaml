@@ -17,3 +17,10 @@ spec:
         secretRef:
           name: "mysecret"
           key: "token"
+    - name: "rabbit-ssh"
+      localAddr:
+        host: "127.0.0.1"
+        port: 22
+      token:
+        type: direct
+        key: test
