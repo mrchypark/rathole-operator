@@ -1,8 +1,11 @@
+use garde::{Valid, Validate};
 use kube::CustomResource;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(CustomResource, Serialize, Deserialize, Default, Debug, PartialEq, Clone, JsonSchema)]
+#[derive(
+	CustomResource, Serialize, Deserialize, Default, Debug, PartialEq, Clone, JsonSchema, Validate,
+)]
 #[kube(
 	group = "rathole.mrchypark.github.io",
 	version = "v1alpha1",
@@ -22,6 +25,7 @@ pub struct ClientSpec {
 	#[serde(default = "heartbeat_timeout_default")]
 	#[serde(rename(deserialize = "heartbeatTimeout"))]
 	pub heartbeat_timeout: i32,
+	#[garde(range(min = 1, max = 100))]
 	#[serde(default = "retry_interval_default")]
 	#[serde(rename(deserialize = "retryInterval"))]
 	pub retry_interval: i32,
